@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustTunnel - Modern Open-Source VPN Protocol</title>
+    <meta name="description" content="TrustTunnel is a modern, open-source VPN protocol that delivers fast, secure, and reliable VPN connections without the usual trade-offs.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+</head>
+<body class="min-h-screen flex flex-col bg-white text-gray-900">
+    <!-- Navigation -->
+    <nav class="border-b border-gray-200">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="index.html" class="flex items-center space-x-3">
+                    <img src="assets/logo.png" alt="TrustTunnel Logo" class="h-10 w-10">
+                    <span class="text-xl font-semibold text-gray-900">TrustTunnel</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        <!-- Hero Section -->
+        <section class="py-16 sm:py-24">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">TrustTunnel</h1>
+                <p class="text-xl text-gray-600 max-w-3xl">
+                    A modern, open-source VPN protocol originally developed by
+                    <a href="https://adguard-vpn.com/welcome.html" class="text-blue-600 hover:text-blue-800 underline">AdGuard VPN</a>
+                    and now available for anyone to use, audit, and implement.
+                </p>
+                <p class="text-lg text-gray-600 mt-4 max-w-3xl">
+                    It delivers fast, secure, and reliable VPN connections without the usual trade-offs. By design, TrustTunnel traffic is indistinguishable from regular HTTPS traffic, allowing it to bypass throttling and deep-packet inspection while maintaining strong privacy protections.
+                </p>
+            </div>
+        </section>
+
+        <!-- Problem Section -->
+        <section class="py-12 bg-gray-50">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">The Problem with Traditional VPN Protocols</h2>
+                <p class="text-gray-600 mb-6">
+                    Popular VPN protocols (OpenVPN, WireGuard, IPSec, etc.) share common weaknesses:
+                </p>
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-start">
+                        <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-100 text-red-600 mr-3 mt-0.5">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </span>
+                        <div>
+                            <strong class="text-gray-900">Easy detection</strong>
+                            <span class="text-gray-600"> — They can be identified and blocked at the network level.</span>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-100 text-red-600 mr-3 mt-0.5">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </span>
+                        <div>
+                            <strong class="text-gray-900">Performance penalty for stealth</strong>
+                            <span class="text-gray-600"> — Concealing VPN traffic typically degrades speed.</span>
+                        </div>
+                    </li>
+                </ul>
+                <p class="text-gray-600 mb-6">
+                    Traditional approaches "wrap" VPN data in a TCP connection and add encryption to mimic normal web traffic. However, TCP's delivery confirmation overhead introduces latency and reduces throughput.
+                </p>
+                <div class="my-8 flex justify-center">
+                    <object data="assets/protocol-traditional.svg" type="image/svg+xml" class="max-w-full h-auto">
+                        <img src="assets/protocol-traditional.svg" alt="Traditional VPN protocol overhead">
+                    </object>
+                </div>
+                <p class="text-gray-600">
+                    With conventional protocols, users face a trade-off: <strong>fast but detectable</strong> or <strong>stealthy but slow</strong>.
+                </p>
+            </div>
+        </section>
+
+        <!-- Solution Section -->
+        <section class="py-12">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">How TrustTunnel Solves This</h2>
+                <div class="my-8 flex justify-center">
+                    <object data="assets/protocol-trusttunnel.svg" type="image/svg+xml" class="max-w-full h-auto">
+                        <img src="assets/protocol-trusttunnel.svg" alt="TrustTunnel protocol design">
+                    </object>
+                </div>
+                <p class="text-gray-600 mb-8">
+                    TrustTunnel eliminates this trade-off through several key design choices:
+                </p>
+
+                <!-- Features Grid -->
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600 mr-3">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </span>
+                            <h3 class="text-xl font-semibold text-gray-900">Indistinguishable from HTTPS</h3>
+                        </div>
+                        <p class="text-gray-600">
+                            Connections to a TrustTunnel server look identical to connections to any normal website. Deep-packet inspection cannot differentiate TrustTunnel traffic from regular HTTPS browsing.
+                        </p>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-green-100 text-green-600 mr-3">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                            </span>
+                            <h3 class="text-xl font-semibold text-gray-900">Battle-tested Encryption</h3>
+                        </div>
+                        <p class="text-gray-600">
+                            TrustTunnel uses <strong>TLS</strong> (the same encryption that secures HTTPS) rather than a custom cryptographic implementation. TLS libraries are widely deployed and continuously audited for security vulnerabilities.
+                        </p>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-purple-100 text-purple-600 mr-3">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </span>
+                            <h3 class="text-xl font-semibold text-gray-900">HTTP/2 and HTTP/3 Transport</h3>
+                        </div>
+                        <p class="text-gray-600">
+                            By leveraging <strong>HTTP/2</strong> or <strong>HTTP/3</strong> as the transport layer, TrustTunnel achieves both undetectability and high performance. These modern protocols are ubiquitous on the web, making TrustTunnel traffic blend in seamlessly.
+                        </p>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-orange-100 text-orange-600 mr-3">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                            </span>
+                            <h3 class="text-xl font-semibold text-gray-900">Stream-based Architecture</h3>
+                        </div>
+                        <p class="text-gray-600">
+                            Unlike traditional VPNs that operate on packets, TrustTunnel operates on <strong>data streams</strong>. Each connection gets its own HTTP/2 (or HTTP/3) stream, creating a dedicated tunnel. This design enables packet buffering—multiple packets can be combined before transmission, dramatically reducing confirmation overhead and improving throughput.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="my-12 flex justify-center">
+                    <object data="assets/protocol-comparison.svg" type="image/svg+xml" class="max-w-full h-auto">
+                        <img src="assets/protocol-comparison.svg" alt="TrustTunnel vs traditional protocol comparison">
+                    </object>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 py-8">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                <p class="text-gray-500 text-sm">
+                    &copy; 2025 AdGuard Software Limited. All rights reserved.
+                </p>
+                <a href="privacy.html" class="text-gray-500 hover:text-gray-700 text-sm">
+                    Privacy Policy
+                </a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
