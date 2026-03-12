@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Configuration - TrustTunnel</title>
+    <meta name="description" content="Import TrustTunnel VPN configuration into the app by scanning a QR code.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+</head>
+<body class="min-h-screen flex flex-col bg-white text-gray-900">
+    <!-- Navigation -->
+    <nav class="border-b border-gray-200">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="index.html" class="flex items-center">
+                    <img src="assets/logo.svg" alt="TrustTunnel" class="h-6">
+                </a>
+                <a href="https://github.com/TrustTunnel/TrustTunnel" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-gray-900">
+                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow py-12">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <!-- Input state (no payload) -->
+            <div id="input-section" class="hidden">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2 text-center">Import TrustTunnel Configuration</h1>
+                <p class="text-gray-600 text-center mb-8">Paste your TrustTunnel configuration link below to generate a QR code.</p>
+                <form id="link-form" class="max-w-xl mx-auto">
+                    <label for="link-input" class="block text-sm font-medium text-gray-700 mb-2">Enter TrustTunnel configuration link</label>
+                    <input type="text" id="link-input" placeholder="tt://?AQAL..." class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <button type="submit" class="mt-4 w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">Submit</button>
+                </form>
+            </div>
+
+            <!-- Error state -->
+            <div id="error-section" class="hidden">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                    <svg class="mx-auto h-12 w-12 text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                    <h1 class="text-xl font-semibold text-red-800 mb-2">Invalid Configuration Link</h1>
+                    <p id="error-message" class="text-red-600">The link does not contain a valid TrustTunnel configuration payload.</p>
+                </div>
+            </div>
+
+            <!-- Success state -->
+            <div id="success-section" class="hidden">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2 text-center">Import TrustTunnel Configuration</h1>
+                <p class="text-gray-600 text-center mb-8">Follow the steps below to connect to your VPN endpoint.</p>
+
+                <!-- Step 1: Install -->
+                <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                    <div class="flex items-start">
+                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-600 text-white font-bold mr-4 flex-shrink-0">1</span>
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-900 mb-3">Install the TrustTunnel App</h2>
+                            <div class="flex flex-wrap gap-3">
+                                <a href="https://agrd.io/ios_trusttunnel" target="_blank" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                                    </svg>
+                                    App Store (iOS)
+                                </a>
+                                <a href="https://agrd.io/android_trusttunnel" target="_blank" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 010 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 8.99l-2.302 2.302-8.634-8.634z"/>
+                                    </svg>
+                                    Google Play (Android)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Scan QR -->
+                <div class="bg-gray-50 rounded-lg p-6 mb-8">
+                    <div class="flex items-start">
+                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-600 text-white font-bold mr-4 flex-shrink-0">2</span>
+                        <div class="w-full">
+                            <h2 class="text-xl font-semibold text-gray-900 mb-3">Scan the QR Code</h2>
+                            <p class="text-gray-600 mb-4">Open the TrustTunnel app and scan this QR code to import the configuration.</p>
+                            <div class="flex justify-center">
+                                <div class="bg-white rounded-lg p-4 shadow-sm inline-block">
+                                    <canvas id="qr-canvas"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration Details -->
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Configuration Details</h3>
+                    </div>
+                    <div class="divide-y divide-gray-200" id="config-details"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 py-8">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+                <p class="text-gray-500 text-sm">
+                    &copy; 2026 AdGuard Software Limited. All rights reserved.
+                </p>
+                <a href="privacy.html" class="text-gray-500 hover:text-gray-700 text-sm">
+                    Privacy Policy
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    (function () {
+        'use strict';
+
+        // --- Base64url decoding ---
+        function base64urlToBytes(str) {
+            // Restore standard Base64: replace URL-safe chars and add padding
+            var b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (b64.length % 4 !== 0) {
+                b64 += '=';
+            }
+            var binary = atob(b64);
+            var bytes = new Uint8Array(binary.length);
+            for (var i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        // --- TLS varint decoding (RFC 9000 §16) ---
+        function readVarint(buf, offset) {
+            if (offset >= buf.length) {
+                throw new Error('Unexpected end of buffer reading varint');
+            }
+            var first = buf[offset];
+            var prefix = first >> 6;
+            var len = 1 << prefix; // 1, 2, 4, or 8 bytes
+            if (offset + len > buf.length) {
+                throw new Error('Unexpected end of buffer reading varint');
+            }
+            var value = first & 0x3f;
+            for (var i = 1; i < len; i++) {
+                value = value * 256 + buf[offset + i];
+            }
+            return { value: value, bytesRead: len };
+        }
+
+        // --- TLV parser ---
+        var FIELD_TAGS = {
+            0x00: 'version',
+            0x01: 'hostname',
+            0x02: 'addresses',
+            0x03: 'custom_sni',
+            0x04: 'has_ipv6',
+            0x05: 'username',
+            0x06: 'password',
+            0x07: 'skip_verification',
+            0x08: 'certificate',
+            0x09: 'upstream_protocol',
+            0x0A: 'anti_dpi',
+            0x0B: 'client_random_prefix'
+        };
+
+        var UPSTREAM_PROTOCOL_MAP = {
+            0x01: 'HTTP/2',
+            0x02: 'HTTP/3'
+        };
+
+        function parseTLV(bytes) {
+            var config = {
+                hostname: null,
+                addresses: [],
+                custom_sni: null,
+                has_ipv6: true,
+                username: null,
+                password: null,
+                skip_verification: false,
+                certificate: false,
+                upstream_protocol: 'HTTP/2',
+                anti_dpi: false,
+                client_random_prefix: null
+            };
+
+            var offset = 0;
+            var decoder = new TextDecoder('utf-8');
+
+            while (offset < bytes.length) {
+                var tagResult = readVarint(bytes, offset);
+                offset += tagResult.bytesRead;
+
+                var lenResult = readVarint(bytes, offset);
+                offset += lenResult.bytesRead;
+
+                var tag = tagResult.value;
+                var len = lenResult.value;
+
+                if (offset + len > bytes.length) {
+                    throw new Error('TLV value exceeds buffer length');
+                }
+
+                var value = bytes.slice(offset, offset + len);
+                offset += len;
+
+                var fieldName = FIELD_TAGS[tag];
+                if (!fieldName) {
+                    // Unknown tag — skip per spec
+                    continue;
+                }
+
+                switch (tag) {
+                    case 0x01: // hostname
+                        config.hostname = decoder.decode(value);
+                        break;
+                    case 0x02: // addresses (may repeat)
+                        config.addresses.push(decoder.decode(value));
+                        break;
+                    case 0x03: // custom_sni
+                        config.custom_sni = decoder.decode(value);
+                        break;
+                    case 0x04: // has_ipv6
+                        config.has_ipv6 = value[0] === 0x01;
+                        break;
+                    case 0x05: // username
+                        config.username = decoder.decode(value);
+                        break;
+                    case 0x06: // password
+                        config.password = decoder.decode(value);
+                        break;
+                    case 0x07: // skip_verification
+                        config.skip_verification = value[0] === 0x01;
+                        break;
+                    case 0x08: // certificate (binary DER)
+                        config.certificate = true;
+                        break;
+                    case 0x09: // upstream_protocol
+                        config.upstream_protocol = UPSTREAM_PROTOCOL_MAP[value[0]] || 'Unknown';
+                        break;
+                    case 0x0A: // anti_dpi
+                        config.anti_dpi = value[0] === 0x01;
+                        break;
+                    case 0x0B: // client_random_prefix
+                        config.client_random_prefix = decoder.decode(value);
+                        break;
+                }
+            }
+
+            // Validate required fields
+            if (!config.hostname) throw new Error('Missing required field: hostname');
+            if (config.addresses.length === 0) throw new Error('Missing required field: addresses');
+            if (!config.username) throw new Error('Missing required field: username');
+            if (!config.password) throw new Error('Missing required field: password');
+
+            return config;
+        }
+
+        // --- Mask credentials for display ---
+        function maskString(str) {
+            if (!str || str.length <= 2) return '••••';
+            return str[0] + '•'.repeat(Math.min(str.length - 2, 8)) + str[str.length - 1];
+        }
+
+        // --- Render configuration details ---
+        function renderConfig(config) {
+            var container = document.getElementById('config-details');
+            var rows = [
+                { label: 'Hostname', value: config.hostname },
+                { label: 'Addresses', value: config.addresses.join(', ') },
+                { label: 'Username', value: maskString(config.username) },
+                { label: 'Password', value: maskString(config.password) },
+                { label: 'Protocol', value: config.upstream_protocol }
+            ];
+
+            if (config.custom_sni) {
+                rows.push({ label: 'Custom SNI', value: config.custom_sni });
+            }
+            if (config.client_random_prefix) {
+                rows.push({ label: 'Client Random Prefix', value: config.client_random_prefix });
+            }
+            rows.push({ label: 'IPv6', value: config.has_ipv6 ? 'Enabled' : 'Disabled' });
+            rows.push({ label: 'Anti-DPI', value: config.anti_dpi ? 'Enabled' : 'Disabled' });
+            rows.push({ label: 'Skip Verification', value: config.skip_verification ? 'Yes' : 'No' });
+            if (config.certificate) {
+                rows.push({ label: 'Certificate', value: 'Custom certificate included' });
+            }
+
+            container.innerHTML = rows.map(function (row) {
+                return '<div class="px-6 py-3 flex justify-between items-center">' +
+                    '<span class="text-sm font-medium text-gray-500">' + escapeHtml(row.label) + '</span>' +
+                    '<span class="text-sm text-gray-900 font-mono">' + escapeHtml(row.value) + '</span>' +
+                    '</div>';
+            }).join('');
+        }
+
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        // --- Main ---
+        var SECTIONS = ['input-section', 'error-section', 'success-section'];
+
+        function showSection(id) {
+            SECTIONS.forEach(function (s) {
+                document.getElementById(s).classList.add('hidden');
+            });
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function showError(msg) {
+            if (msg) {
+                document.getElementById('error-message').textContent = msg;
+            }
+            showSection('error-section');
+        }
+
+        function showSuccess() {
+            showSection('success-section');
+        }
+
+        function showInput() {
+            showSection('input-section');
+        }
+
+        // --- Extract payload from hash (#tt=<payload>) ---
+        function getPayloadFromHash() {
+            var hash = window.location.hash;
+            if (!hash || hash.length < 2) return null;
+            var str = hash.substring(1); // strip '#'
+            var prefix = 'tt=';
+            if (str.substring(0, prefix.length) !== prefix) return null;
+            var payload = str.substring(prefix.length);
+            return payload.length > 0 ? payload : null;
+        }
+
+        // --- Extract payload from a tt:// link ---
+        function getPayloadFromLink(link) {
+            var trimmed = link.trim();
+            var prefix = 'tt://?';
+            if (trimmed.substring(0, prefix.length) !== prefix) return null;
+            var payload = trimmed.substring(prefix.length);
+            return payload.length > 0 ? payload : null;
+        }
+
+        // --- Render everything for a given payload ---
+        function renderPayload(payload) {
+            var bytes = base64urlToBytes(payload);
+            var config = parseTLV(bytes);
+            var ttLink = 'tt://?' + payload;
+
+            showSuccess();
+
+            new QRious({
+                element: document.getElementById('qr-canvas'),
+                value: ttLink,
+                size: 280,
+                level: 'M',
+                background: '#ffffff',
+                foreground: '#000000'
+            });
+
+            renderConfig(config);
+        }
+
+        // --- Form handler ---
+        document.getElementById('link-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var input = document.getElementById('link-input').value;
+            var payload = getPayloadFromLink(input);
+            if (!payload) {
+                showError('Invalid link. Please enter a valid tt:// configuration link.');
+                return;
+            }
+            try {
+                renderPayload(payload);
+                // Update the URL hash so the page is shareable
+                window.location.hash = 'tt=' + payload;
+            } catch (err) {
+                showError(err.message || 'Failed to decode the configuration payload.');
+            }
+        });
+
+        // --- Init ---
+        try {
+            var payload = getPayloadFromHash();
+            if (!payload) {
+                showInput();
+                return;
+            }
+            renderPayload(payload);
+        } catch (e) {
+            showError(e.message || 'Failed to decode the configuration payload.');
+        }
+    })();
+    </script>
+</body>
+</html>
