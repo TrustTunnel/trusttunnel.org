@@ -37,8 +37,9 @@
                 <form id="link-form" class="max-w-xl mx-auto">
                     <label for="link-input" class="block text-sm font-medium text-gray-700 mb-2">Enter TrustTunnel configuration link</label>
                     <input type="text" id="link-input" placeholder="tt://?AQAL..." class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <button type="submit" class="mt-4 w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">Submit</button>
+                    <button type="submit" class="mt-4 w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">Generate QR Code Locally</button>
                 </form>
+                <p class="mt-4 text-sm text-gray-500 text-center">This is an offline QR code generator. Your data is processed entirely in your browser and is never sent to any server. You can also <a href="#" id="download-page-link" class="text-blue-600 hover:text-blue-800 underline">download this page</a> to run it locally.</p>
             </div>
 
             <!-- Error state -->
@@ -429,6 +430,21 @@
             } catch (err) {
                 showError(err.message || 'Failed to decode the configuration payload.');
             }
+        });
+
+        // --- Download page for offline use ---
+        document.getElementById('download-page-link').addEventListener('click', function (e) {
+            e.preventDefault();
+            var html = document.documentElement.outerHTML;
+            var blob = new Blob(['<!DOCTYPE html>\n' + html], { type: 'text/html' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'trusttunnel-qr.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         });
 
         // --- Init ---
