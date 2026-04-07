@@ -91,7 +91,9 @@
                             <p class="text-gray-600 mb-4">Open your phone&#39;s camera or QR scanner and scan this QR code to import the configuration.</p>
                             <div class="flex flex-col items-center">
                                 <div class="bg-white rounded-lg p-4 shadow-sm inline-block">
-                                    <canvas id="qr-canvas"></canvas>
+                                    <a id="qr-link" href="#" target="_blank" rel="noopener noreferrer">
+                                        <canvas id="qr-canvas"></canvas>
+                                    </a>
                                 </div>
                                 <div class="flex items-center gap-3 mt-3">
                                     <button id="qr-smaller" type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors" title="Smaller">
@@ -183,16 +185,19 @@
             0x08: 'certificate',
             0x09: 'upstream_protocol',
             0x0A: 'anti_dpi',
-            0x0B: 'client_random_prefix'
+            0x0B: 'client_random_prefix',
+            0x0C: 'name',
+            0x0D: 'dns_upstreams',
         };
 
         var UPSTREAM_PROTOCOL_MAP = {
             0x01: 'HTTP/2',
-            0x02: 'HTTP/3'
+            0x02: 'HTTP/3',
         };
 
         function parseTLV(bytes) {
             var config = {
+                name: null,
                 hostname: null,
                 addresses: [],
                 custom_sni: null,
@@ -203,7 +208,8 @@
                 certificate: false,
                 upstream_protocol: 'HTTP/2',
                 anti_dpi: false,
-                client_random_prefix: null
+                client_random_prefix: null,
+                dns_upstreams: [],
             };
 
             var offset = 0;
@@ -266,6 +272,23 @@
                     case 0x0B: // client_random_prefix
                         config.client_random_prefix = decoder.decode(value);
                         break;
+                    case 0x0C: // name
+                        config.name = decoder.decode(value);
+                        break;
+                    case 0x0D: // dns_upstreams (String[] — length-prefixed sequence)
+                        var dnsOffset = 0;
+                        while (dnsOffset < value.length) {
+                            var dnsLenResult = readVarint(value, dnsOffset);
+                            dnsOffset += dnsLenResult.bytesRead;
+
+                            if (dnsOffset + dnsLenResult.value > value.length) {
+                                throw new Error('dns_upstreams entry exceeds buffer length');
+                            }
+                            var dnsEntry = decoder.decode(value.slice(dnsOffset, dnsOffset + dnsLenResult.value));
+                            dnsOffset += dnsLenResult.value;
+                            config.dns_upstreams.push(dnsEntry);
+                        }
+                        break;
                 }
             }
 
@@ -287,13 +310,17 @@
         // --- Render configuration details ---
         function renderConfig(config) {
             var container = document.getElementById('config-details');
-            var rows = [
+            var rows = [];
+            if (config.name) {
+                rows.push({ label: 'Name', value: config.name });
+            }
+            rows.push(
                 { label: 'Hostname', value: config.hostname },
                 { label: 'Addresses', value: config.addresses.join(', ') },
                 { label: 'Username', value: maskString(config.username) },
                 { label: 'Password', value: maskString(config.password) },
                 { label: 'Protocol', value: config.upstream_protocol }
-            ];
+            );
 
             if (config.custom_sni) {
                 rows.push({ label: 'Custom SNI', value: config.custom_sni });
@@ -306,6 +333,9 @@
             rows.push({ label: 'Skip Verification', value: config.skip_verification ? 'Yes' : 'No' });
             if (config.certificate) {
                 rows.push({ label: 'Certificate', value: 'Custom certificate included' });
+            }
+            if (config.dns_upstreams && config.dns_upstreams.length > 0) {
+                rows.push({ label: 'DNS Upstreams', value: config.dns_upstreams.join(', ') });
             }
 
             container.innerHTML = rows.map(function (row) {
@@ -383,6 +413,7 @@
 
         function renderQR(size) {
             currentQRSize = Math.max(QR_MIN, Math.min(QR_MAX, size));
+            document.getElementById('qr-link').href = currentTTLink;
             document.getElementById('qr-size-label').textContent = currentQRSize + ' px';
             document.getElementById('qr-smaller').disabled = currentQRSize <= QR_MIN;
             document.getElementById('qr-bigger').disabled = currentQRSize >= QR_MAX;
