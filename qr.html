@@ -280,6 +280,10 @@
                         while (dnsOffset < value.length) {
                             var dnsLenResult = readVarint(value, dnsOffset);
                             dnsOffset += dnsLenResult.bytesRead;
+
+                            if (dnsOffset + dnsLenResult.value > value.length) {
+                                throw new Error('dns_upstreams entry exceeds buffer length');
+                            }
                             var dnsEntry = decoder.decode(value.slice(dnsOffset, dnsOffset + dnsLenResult.value));
                             dnsOffset += dnsLenResult.value;
                             config.dns_upstreams.push(dnsEntry);
