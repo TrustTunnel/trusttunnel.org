@@ -95,18 +95,25 @@
                                         <canvas id="qr-canvas"></canvas>
                                     </a>
                                 </div>
-                                <div class="flex items-center gap-3 mt-3">
-                                    <button id="qr-smaller" type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors" title="Smaller">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 12h14"/></svg>
-                                    </button>
-                                    <span id="qr-size-label" class="text-sm text-gray-500 tabular-nums w-16 text-center">280 px</span>
-                                    <button id="qr-bigger" type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100 transition-colors" title="Bigger">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Alternative: Open in App -->
+                <div class="flex items-center my-2 mb-6">
+                    <div class="flex-grow border-t border-gray-300"></div>
+                    <span class="px-4 text-sm text-gray-400 font-medium uppercase tracking-wide">or</span>
+                    <div class="flex-grow border-t border-gray-300"></div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-6 mb-8 text-center">
+                    <p class="text-gray-600 mb-4">If you&#39;re viewing this on a device with TrustTunnel installed, open the configuration directly.</p>
+                    <a id="open-in-app-link" href="#" class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Open in TrustTunnel App
+                    </a>
                 </div>
 
                 <!-- Configuration Details -->
@@ -414,9 +421,7 @@
         function renderQR(size) {
             currentQRSize = Math.max(QR_MIN, Math.min(QR_MAX, size));
             document.getElementById('qr-link').href = currentTTLink;
-            document.getElementById('qr-size-label').textContent = currentQRSize + ' px';
-            document.getElementById('qr-smaller').disabled = currentQRSize <= QR_MIN;
-            document.getElementById('qr-bigger').disabled = currentQRSize >= QR_MAX;
+            document.getElementById('open-in-app-link').href = currentTTLink;
             new QRious({
                 element: document.getElementById('qr-canvas'),
                 value: currentTTLink,
@@ -427,12 +432,7 @@
             });
         }
 
-        document.getElementById('qr-bigger').addEventListener('click', function () {
-            renderQR(currentQRSize + QR_STEP);
-        });
-        document.getElementById('qr-smaller').addEventListener('click', function () {
-            renderQR(currentQRSize - QR_STEP);
-        });
+
 
         // --- Render everything for a given payload ---
         function renderPayload(payload) {
