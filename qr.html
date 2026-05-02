@@ -40,6 +40,91 @@
                     <button type="submit" class="mt-4 w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">Generate QR Code Locally</button>
                 </form>
                 <p class="mt-4 text-sm text-gray-500 text-center">This is an offline QR code generator. Your data is processed entirely in your browser and is never sent to any server. You can also <a href="#" id="download-page-link" class="text-blue-600 hover:text-blue-800 underline">download this page</a> to run it locally.</p>
+                <p class="mt-3 text-sm text-center">
+                    <a href="#" id="open-generator-link" class="text-blue-600 hover:text-blue-800 underline">Create a QR code from configuration &rarr;</a>
+                </p>
+            </div>
+
+            <!-- Generator form state -->
+            <div id="generator-section" class="hidden">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2 text-center">Create TrustTunnel Configuration</h1>
+                <p class="text-gray-600 text-center mb-8">Fill in the fields below to generate a QR code for importing into the TrustTunnel app.</p>
+                <form id="generator-form" class="max-w-xl mx-auto space-y-5">
+                    <!-- Server name -->
+                    <div>
+                        <label for="gen-name" class="block text-sm font-medium text-gray-700 mb-1">Server name</label>
+                        <input type="text" id="gen-name" placeholder="My VPN Server" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <!-- Address -->
+                    <div>
+                        <label for="gen-addresses" class="block text-sm font-medium text-gray-700 mb-1">Address <span class="text-red-500">*</span></label>
+                        <input type="text" id="gen-addresses" placeholder="1.2.3.4:443, 5.6.7.8:443" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">If port is not specified, 443 is used. Comma-separated for multiple addresses.</p>
+                    </div>
+                    <!-- Domain name from server certificate -->
+                    <div>
+                        <label for="gen-hostname" class="block text-sm font-medium text-gray-700 mb-1">Domain name from server certificate <span class="text-red-500">*</span></label>
+                        <input type="text" id="gen-hostname" placeholder="vpn.example.com" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <!-- Custom SNI -->
+                    <div>
+                        <label for="gen-sni" class="block text-sm font-medium text-gray-700 mb-1">Custom SNI</label>
+                        <input type="text" id="gen-sni" placeholder="example.com" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <!-- Username -->
+                    <div>
+                        <label for="gen-username" class="block text-sm font-medium text-gray-700 mb-1">Username <span class="text-red-500">*</span></label>
+                        <input type="text" id="gen-username" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <!-- Password -->
+                    <div>
+                        <label for="gen-password" class="block text-sm font-medium text-gray-700 mb-1">Password <span class="text-red-500">*</span></label>
+                        <input type="password" id="gen-password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <!-- Protocol -->
+                    <div>
+                        <label for="gen-protocol" class="block text-sm font-medium text-gray-700 mb-1">Protocol</label>
+                        <select id="gen-protocol" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="1">HTTP/2</option>
+                            <option value="2">HTTP/3</option>
+                        </select>
+                    </div>
+                    <!-- DNS server addresses -->
+                    <div>
+                        <label for="gen-dns" class="block text-sm font-medium text-gray-700 mb-1">DNS server addresses, one per line</label>
+                        <textarea id="gen-dns" rows="3" placeholder="https://dns.google/dns-query" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+                    <!-- Client Random, hex sequence -->
+                    <div>
+                        <label for="gen-prefix" class="block text-sm font-medium text-gray-700 mb-1">Client Random, hex sequence</label>
+                        <input type="text" id="gen-prefix" placeholder="abcdef, 0a0b0c/0f0f0f" maxlength="64" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">Max length &mdash; 64 characters</p>
+                    </div>
+                    <!-- Self-signed certificate, PEM file -->
+                    <div>
+                        <label for="gen-certificate" class="block text-sm font-medium text-gray-700 mb-1">Self-signed certificate, PEM file</label>
+                        <textarea id="gen-certificate" rows="4" placeholder="-----BEGIN CERTIFICATE-----&#10;MIIDijCCAxGgAwIBAgIS...&#10;-----END CERTIFICATE-----" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-xs"></textarea>
+                    </div>
+                    <!-- Toggles -->
+                    <div class="space-y-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="gen-ipv6" checked class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Allow IPv6 connections via the server</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="gen-antidpi" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Anti-DPI</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="gen-skipverify" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Skip certificate verification</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">Generate QR Code</button>
+                </form>
+                <p class="mt-4 text-sm text-gray-500 text-center">
+                    <a href="#" id="back-to-input-link" class="text-blue-600 hover:text-blue-800 underline">&larr; Back to link input</a>
+                </p>
             </div>
 
             <!-- Error state -->
@@ -118,8 +203,14 @@
 
                 <!-- Configuration Details -->
                 <div class="border border-gray-200 rounded-lg overflow-hidden">
-                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                         <h3 class="text-lg font-semibold text-gray-900">Configuration Details</h3>
+                        <button id="edit-config-btn" class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors">
+                            <svg class="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                            Edit
+                        </button>
                     </div>
                     <div class="divide-y divide-gray-200" id="config-details"></div>
                 </div>
@@ -319,30 +410,35 @@
             var container = document.getElementById('config-details');
             var rows = [];
             if (config.name) {
-                rows.push({ label: 'Name', value: config.name });
+                rows.push({ label: 'Server name', value: config.name });
             }
             rows.push(
-                { label: 'Hostname', value: config.hostname },
-                { label: 'Addresses', value: config.addresses.join(', ') },
+                { label: 'Address', value: config.addresses.join(', ') },
+                { label: 'Domain name from server certificate', value: config.hostname },
+            );
+            if (config.custom_sni) {
+                rows.push({ label: 'Custom SNI', value: config.custom_sni });
+            }
+            rows.push(
                 { label: 'Username', value: maskString(config.username) },
                 { label: 'Password', value: maskString(config.password) },
                 { label: 'Protocol', value: config.upstream_protocol }
             );
-
-            if (config.custom_sni) {
-                rows.push({ label: 'Custom SNI', value: config.custom_sni });
+            if (config.dns_upstreams && config.dns_upstreams.length > 0) {
+                rows.push({ label: 'DNS server addresses', value: config.dns_upstreams.join(', ') });
             }
             if (config.client_random_prefix) {
-                rows.push({ label: 'Client Random Prefix', value: config.client_random_prefix });
+                rows.push({ label: 'Client Random', value: config.client_random_prefix });
             }
-            rows.push({ label: 'IPv6', value: config.has_ipv6 ? 'Enabled' : 'Disabled' });
-            rows.push({ label: 'Anti-DPI', value: config.anti_dpi ? 'Enabled' : 'Disabled' });
-            rows.push({ label: 'Skip Verification', value: config.skip_verification ? 'Yes' : 'No' });
             if (config.certificate) {
-                rows.push({ label: 'Certificate', value: 'Custom certificate included' });
+                rows.push({ label: 'Self-signed certificate', value: 'Custom certificate included' });
             }
-            if (config.dns_upstreams && config.dns_upstreams.length > 0) {
-                rows.push({ label: 'DNS Upstreams', value: config.dns_upstreams.join(', ') });
+            rows.push({ label: 'Allow IPv6 connections via the server', value: config.has_ipv6 ? 'Yes' : 'No' });
+            if (config.anti_dpi) {
+                rows.push({ label: 'Anti-DPI', value: 'Enabled' });
+            }
+            if (config.skip_verification) {
+                rows.push({ label: 'Skip certificate verification', value: 'Yes' });
             }
 
             container.innerHTML = rows.map(function (row) {
@@ -360,7 +456,7 @@
         }
 
         // --- Main ---
-        var SECTIONS = ['input-section', 'error-section', 'success-section'];
+        var SECTIONS = ['input-section', 'error-section', 'success-section', 'generator-section'];
 
         function showSection(id) {
             SECTIONS.forEach(function (s) {
@@ -382,6 +478,154 @@
 
         function showInput() {
             showSection('input-section');
+        }
+
+        function showGenerator() {
+            showSection('generator-section');
+        }
+
+        // --- TLV encoding (reverse of parser) ---
+        function writeVarint(value) {
+            if (value <= 0x3f) {
+                return [value];
+            } else if (value <= 0x3fff) {
+                return [(value >> 8) | 0x40, value & 0xff];
+            } else if (value <= 0x3fffffff) {
+                return [
+                    (value >> 24) | 0x80,
+                    (value >> 16) & 0xff,
+                    (value >> 8) & 0xff,
+                    value & 0xff
+                ];
+            }
+            throw new Error('Varint value too large');
+        }
+
+        function stringToBytes(str) {
+            return new TextEncoder().encode(str);
+        }
+
+        function writeTLV(tag, valueBytes) {
+            var tagBytes = writeVarint(tag);
+            var lenBytes = writeVarint(valueBytes.length);
+            var result = new Uint8Array(tagBytes.length + lenBytes.length + valueBytes.length);
+            result.set(tagBytes, 0);
+            result.set(lenBytes, tagBytes.length);
+            result.set(valueBytes, tagBytes.length + lenBytes.length);
+            return result;
+        }
+
+        function writeTLVString(tag, str) {
+            return writeTLV(tag, stringToBytes(str));
+        }
+
+        function writeTLVBool(tag, val) {
+            return writeTLV(tag, new Uint8Array([val ? 0x01 : 0x00]));
+        }
+
+        function bytesToBase64url(bytes) {
+            var binary = '';
+            for (var i = 0; i < bytes.length; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary)
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+        }
+
+        function pemToderBytes(pem) {
+            // Decode each PEM block to DER separately, then concatenate all DER bytes
+            var lines = pem.split('\n');
+            var derChunks = [];
+            var b64 = '';
+            var inBlock = false;
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i].trim();
+                if (line === '-----BEGIN CERTIFICATE-----') {
+                    inBlock = true;
+                    b64 = '';
+                    continue;
+                }
+                if (line === '-----END CERTIFICATE-----') {
+                    inBlock = false;
+                    if (b64) {
+                        var binary = atob(b64);
+                        var bytes = new Uint8Array(binary.length);
+                        for (var j = 0; j < binary.length; j++) {
+                            bytes[j] = binary.charCodeAt(j);
+                        }
+                        derChunks.push(bytes);
+                    }
+                    b64 = '';
+                    continue;
+                }
+                if (inBlock && line.length > 0) {
+                    b64 += line;
+                }
+            }
+            if (derChunks.length === 0) throw new Error('No valid PEM certificate data found');
+            // Concatenate all DER-encoded certificates
+            var totalLen = 0;
+            derChunks.forEach(function (c) { totalLen += c.length; });
+            var result = new Uint8Array(totalLen);
+            var offset = 0;
+            derChunks.forEach(function (c) {
+                result.set(c, offset);
+                offset += c.length;
+            });
+            return result;
+        }
+
+        function buildPayload(opts) {
+            var chunks = [];
+            // Version 1 (current spec version)
+            chunks.push(writeTLV(0x00, new Uint8Array([0x01])));
+            if (opts.name) chunks.push(writeTLVString(0x0C, opts.name));
+            chunks.push(writeTLVString(0x01, opts.hostname));
+            opts.addresses.forEach(function (addr) {
+                chunks.push(writeTLVString(0x02, addr));
+            });
+            chunks.push(writeTLVString(0x05, opts.username));
+            chunks.push(writeTLVString(0x06, opts.password));
+            chunks.push(writeTLV(0x09, new Uint8Array([opts.upstream_protocol])));
+            if (opts.custom_sni) chunks.push(writeTLVString(0x03, opts.custom_sni));
+            if (opts.client_random_prefix) chunks.push(writeTLVString(0x0B, opts.client_random_prefix));
+            if (!opts.has_ipv6) chunks.push(writeTLVBool(0x04, false));
+            if (opts.anti_dpi) chunks.push(writeTLVBool(0x0A, true));
+            if (opts.skip_verification) chunks.push(writeTLVBool(0x07, true));
+            if (opts.certificate) chunks.push(writeTLV(0x08, opts.certificate));
+            if (opts.dns_upstreams && opts.dns_upstreams.length > 0) {
+                // Encode as length-prefixed sequence
+                var dnsChunks = [];
+                var totalLen = 0;
+                opts.dns_upstreams.forEach(function (dns) {
+                    var dnsBytes = stringToBytes(dns);
+                    var dnsLenBytes = writeVarint(dnsBytes.length);
+                    dnsChunks.push({ len: dnsLenBytes, data: dnsBytes });
+                    totalLen += dnsLenBytes.length + dnsBytes.length;
+                });
+                var dnsValue = new Uint8Array(totalLen);
+                var offset = 0;
+                dnsChunks.forEach(function (c) {
+                    dnsValue.set(c.len, offset);
+                    offset += c.len.length;
+                    dnsValue.set(c.data, offset);
+                    offset += c.data.length;
+                });
+                chunks.push(writeTLV(0x0D, dnsValue));
+            }
+
+            // Concatenate all chunks
+            var totalLength = 0;
+            chunks.forEach(function (c) { totalLength += c.length; });
+            var result = new Uint8Array(totalLength);
+            var off = 0;
+            chunks.forEach(function (c) {
+                result.set(c, off);
+                off += c.length;
+            });
+            return bytesToBase64url(result);
         }
 
         // --- Extract payload from hash (#tt=<payload>) ---
@@ -410,6 +654,7 @@
         var QR_MAX = 560;
         var currentQRSize = 280;
         var currentTTLink = null;
+        var currentConfig = null;
 
         function defaultQRSize(linkLength) {
             // Scale: short links (~100 chars) → 280px, long links (~2000+ chars) → 560px
@@ -438,11 +683,29 @@
         function renderPayload(payload) {
             var bytes = base64urlToBytes(payload);
             var config = parseTLV(bytes);
+            currentConfig = config;
             currentTTLink = 'tt://?' + payload;
 
             showSuccess();
             renderQR(defaultQRSize(currentTTLink.length));
             renderConfig(config);
+        }
+
+        // --- Prefill generator form from config ---
+        function prefillGenerator(config) {
+            document.getElementById('gen-name').value = config.name || '';
+            document.getElementById('gen-addresses').value = config.addresses.join(', ');
+            document.getElementById('gen-hostname').value = config.hostname || '';
+            document.getElementById('gen-sni').value = config.custom_sni || '';
+            document.getElementById('gen-username').value = config.username || '';
+            document.getElementById('gen-password').value = config.password || '';
+            document.getElementById('gen-protocol').value = config.upstream_protocol === 'HTTP/3' ? '2' : '1';
+            document.getElementById('gen-dns').value = (config.dns_upstreams || []).join('\n');
+            document.getElementById('gen-prefix').value = config.client_random_prefix || '';
+            document.getElementById('gen-certificate').value = '';
+            document.getElementById('gen-ipv6').checked = config.has_ipv6;
+            document.getElementById('gen-antidpi').checked = config.anti_dpi;
+            document.getElementById('gen-skipverify').checked = config.skip_verification;
         }
 
         // --- Form handler ---
@@ -476,6 +739,78 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        });
+
+        // --- Open generator form ---
+        document.getElementById('open-generator-link').addEventListener('click', function (e) {
+            e.preventDefault();
+            showGenerator();
+        });
+
+        // --- Edit configuration ---
+        document.getElementById('edit-config-btn').addEventListener('click', function () {
+            if (currentConfig) {
+                prefillGenerator(currentConfig);
+            }
+            showGenerator();
+        });
+
+        // --- Back to input from generator ---
+        document.getElementById('back-to-input-link').addEventListener('click', function (e) {
+            e.preventDefault();
+            showInput();
+        });
+
+        // --- Generator form handler ---
+        document.getElementById('generator-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var hostname = document.getElementById('gen-hostname').value.trim();
+            var addressesRaw = document.getElementById('gen-addresses').value.trim();
+            var username = document.getElementById('gen-username').value.trim();
+            var password = document.getElementById('gen-password').value;
+
+            if (!hostname || !addressesRaw || !username || !password) {
+                showError('Please fill in all required fields.');
+                return;
+            }
+
+            var addresses = addressesRaw.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+            if (addresses.length === 0) {
+                showError('Please provide at least one address.');
+                return;
+            }
+
+            var opts = {
+                name: document.getElementById('gen-name').value.trim() || null,
+                hostname: hostname,
+                addresses: addresses,
+                username: username,
+                password: password,
+                upstream_protocol: parseInt(document.getElementById('gen-protocol').value, 10),
+                custom_sni: document.getElementById('gen-sni').value.trim() || null,
+                client_random_prefix: document.getElementById('gen-prefix').value.trim() || null,
+                has_ipv6: document.getElementById('gen-ipv6').checked,
+                anti_dpi: document.getElementById('gen-antidpi').checked,
+                skip_verification: document.getElementById('gen-skipverify').checked,
+                certificate: (function () {
+                    var pem = document.getElementById('gen-certificate').value.trim();
+                    if (!pem) return null;
+                    return pemToderBytes(pem);
+                })(),
+                dns_upstreams: (function () {
+                    var raw = document.getElementById('gen-dns').value.trim();
+                    if (!raw) return [];
+                    return raw.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+                })()
+            };
+
+            try {
+                var payload = buildPayload(opts);
+                renderPayload(payload);
+                window.location.hash = 'tt=' + payload;
+            } catch (err) {
+                showError(err.message || 'Failed to encode the configuration.');
+            }
         });
 
         // --- Init ---
