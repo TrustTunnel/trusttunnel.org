@@ -1,0 +1,9 @@
+{
+  "name": "trusttunnel-org",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TrustTunnel website",
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}
