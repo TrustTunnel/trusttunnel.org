@@ -106,6 +106,20 @@
                             <option value="2">HTTP/3</option>
                         </select>
                     </div>
+                    <!-- TLS fingerprint -->
+                    <div>
+                        <label for="gen-tls-profile" class="block text-sm font-medium text-gray-700 mb-1">TLS fingerprint</label>
+                        <select id="gen-tls-profile" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="chrome">Chrome</option>
+                            <option value="chrome_canary">Chrome Canary</option>
+                            <option value="safari">Safari</option>
+                            <option value="firefox">Firefox</option>
+                            <option value="okhttp">OkHttp</option>
+                            <option value="openssl">OpenSSL</option>
+                            <option value="boringssl">BoringSSL (no mimicry)</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">TLS ClientHello fingerprint to mimic. Older clients ignore this setting and use Chrome.</p>
+                    </div>
                     <!-- DNS server addresses -->
                     <div>
                         <label for="gen-dns" class="block text-sm font-medium text-gray-700 mb-1">DNS server addresses, one per line</label>
@@ -319,6 +333,9 @@
                 rows.push({ label: 'Protocol', value: config.upstream_protocol });
             }
 
+            if (config.tls_profile) {
+                rows.push({ label: 'TLS fingerprint', value: config.tls_profile });
+            }
             if (config.dns_upstreams && config.dns_upstreams.length > 0) {
                 rows.push({ label: 'DNS server addresses', value: config.dns_upstreams.join(', ') });
             }
@@ -492,6 +509,31 @@
         }
 
         // --- Prefill generator form from config ---
+        function setTlsProfileField(value) {
+            var select = document.getElementById('gen-tls-profile');
+            var customOptions = select.querySelectorAll('option[data-custom]');
+            for (var i = 0; i < customOptions.length; i++) {
+                customOptions[i].parentNode.removeChild(customOptions[i]);
+            }
+
+            var profile = value || 'chrome';
+            var found = false;
+            for (var j = 0; j < select.options.length; j++) {
+                if (select.options[j].value === profile) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                var option = document.createElement('option');
+                option.value = profile;
+                option.textContent = profile + ' (custom)';
+                option.setAttribute('data-custom', 'true');
+                select.appendChild(option);
+            }
+            select.value = profile;
+        }
+
         function prefillGenerator(config) {
             document.getElementById('gen-name').value = config.name || '';
             document.getElementById('gen-addresses').value = config.addresses.join(', ');
@@ -500,6 +542,7 @@
             document.getElementById('gen-username').value = config.username || '';
             document.getElementById('gen-password').value = config.password || '';
             document.getElementById('gen-protocol').value = config.upstream_protocol === 'HTTP/3' ? '2' : '1';
+            setTlsProfileField(config.tls_profile);
             document.getElementById('gen-dns').value = (config.dns_upstreams || []).join('\n');
             document.getElementById('gen-prefix').value = config.client_random_prefix || '';
             document.getElementById('gen-auth-key').value = config.client_random_auth_key || '';
@@ -681,6 +724,7 @@
                 custom_sni: document.getElementById('gen-sni').value.trim() || null,
                 client_random_prefix: clientRandomPrefix,
                 client_random_auth_key: clientRandomAuthKey,
+                tls_profile: document.getElementById('gen-tls-profile').value || null,
                 has_ipv6: document.getElementById('gen-ipv6').checked,
                 anti_dpi: document.getElementById('gen-antidpi').checked,
                 skip_verification: document.getElementById('gen-skipverify').checked,

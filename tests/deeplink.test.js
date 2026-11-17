@@ -11,6 +11,7 @@ const MINIMAL_URI = 'tt://?AAECAQ92cG4uZXhhbXBsZS5jb20FBWFsaWNlBglzZWNyZXQxMjMCC
 const NAMED_URI = 'tt://?AAECAQ92cG4uZXhhbXBsZS5jb20FBWFsaWNlBglzZWNyZXQxMjMCCzEuMi4zLjQ6NDQzDAlNeSBTZXJ2ZXINEAcxLjEuMS4xBzguOC44Ljg';
 const SUBSCRIPTION_ONLY_URI = 'tt://?AAECDjFodHRwczovL2FsaWNlOnMzY3JldEB2cG4uZXhhbXBsZS5jb20vc3Vic2NyaXB0aW9u';
 const PREFIX_URI = 'tt://?AAECAQ9jcnAuZXhhbXBsZS5jb20FCHRlc3R1c2VyBgh0ZXN0cGFzcwIQMTAuMjAuMzAuNDA6ODQ0MwsKYWFiYmNjZGRlZQ';
+const PROFILE_URI = 'tt://?AAECARNwcm9maWxlLmV4YW1wbGUuY29tBQh0ZXN0dXNlcgYIdGVzdHBhc3MCEDEwLjIwLjMwLjQwOjg0NDMQB2ZpcmVmb3g';
 const SUBSCRIPTION_WITH_FALLBACK_URI = 'tt://?AAECAQ92cG4uZXhhbXBsZS5jb20FBWFsaWNlBgZzM2NyZXQCCzEuMi4zLjQ6NDQzDjFodHRwczovL2FsaWNlOnMzY3JldEB2cG4uZXhhbXBsZS5jb20vc3Vic2NyaXB0aW9u';
 
 // Shared Android/Windows client fixture. It uses the legacy tt://<payload>
@@ -88,6 +89,7 @@ function assertConfigEqual(actual, expected) {
     assert.equal(actual.anti_dpi, expected.anti_dpi);
     assert.equal(actual.client_random_prefix, expected.client_random_prefix);
     assert.equal(actual.client_random_auth_key, expected.client_random_auth_key);
+    assert.equal(actual.tls_profile, expected.tls_profile);
     assert.equal(actual.subscription_url, expected.subscription_url);
     assert.deepEqual(actual.dns_upstreams, expected.dns_upstreams);
     if (expected.certificate_der) {
@@ -122,6 +124,7 @@ function minimalDecoded() {
         anti_dpi: false,
         client_random_prefix: null,
         client_random_auth_key: null,
+        tls_profile: null,
         subscription_url: null,
         dns_upstreams: []
     };
@@ -203,6 +206,31 @@ describe('golden URIs', () => {
         assert.equal(DeepLink.decode(PREFIX_URI).client_random_prefix, 'aabbccddee');
     });
 
+    it('encodes tls_profile exactly like the server reference', () => {
+        const config = {
+            hostname: 'profile.example.com',
+            addresses: ['10.20.30.40:8443'],
+            username: 'testuser',
+            password: 'testpass',
+            tls_profile: 'firefox'
+        };
+        assert.equal(DeepLink.encode(config), PROFILE_URI);
+        assert.equal(DeepLink.decode(PROFILE_URI).tls_profile, 'firefox');
+    });
+
+    it('omits the default tls_profile', () => {
+        // The QR page canonicalizes the default away; the server reference emits
+        // any explicitly present tls_profile.
+        const config = Object.assign(minimalConfig(), { tls_profile: 'chrome' });
+        assert.equal(DeepLink.encode(config), MINIMAL_URI);
+    });
+
+    it('round-trips an unknown tls_profile', () => {
+        const config = Object.assign(minimalConfig(), { tls_profile: 'future_profile' });
+        const decoded = DeepLink.decode(DeepLink.encode(config));
+        assert.equal(decoded.tls_profile, 'future_profile');
+    });
+
     it('encodes a subscription URL with static fallback exactly like the server reference', () => {
         const config = {
             hostname: 'vpn.example.com',
@@ -240,11 +268,12 @@ describe('golden URIs', () => {
             anti_dpi: true,
             client_random_prefix: 'a0b0/f0f0',
             client_random_auth_key: '00112233445566778899aabbccddeeff',
+            tls_profile: 'firefox',
             dns_upstreams: ['1.1.1.1'],
             subscription_url: 'https://alice:secret@vpn.example.com/subscription'
         });
         assert.deepEqual(tagsOf(payload), [
-            0x00, 0x01, 0x05, 0x06, 0x02, 0x0b, 0x0f, 0x03, 0x04, 0x07,
+            0x00, 0x01, 0x05, 0x06, 0x02, 0x0b, 0x0f, 0x10, 0x03, 0x04, 0x07,
             0x0a, 0x08, 0x09, 0x0c, 0x0d, 0x0e
         ]);
     });
@@ -291,6 +320,7 @@ describe('round-trip', () => {
         anti_dpi: true,
         client_random_prefix: 'a0b0/f0f0',
         client_random_auth_key: '00112233445566778899aabbccddeeff',
+        tls_profile: 'firefox',
         dns_upstreams: ['1.1.1.1', 'tls://dns.example.com', 'https://dns.example.com/dns-query'],
         subscription_url: 'https://alice:s3cret@vpn.example.com/subscription'
     };
@@ -644,7 +674,7 @@ describe('malformed payloads', () => {
 
     it('ignores unknown tags', () => {
         const payload = payloadFromTlvs(
-            [tlv(0x00, Uint8Array.from([2]))].concat(required, [tlv(0x10, Uint8Array.from([1, 2, 3]))])
+            [tlv(0x00, Uint8Array.from([2]))].concat(required, [tlv(0x11, Uint8Array.from([1, 2, 3]))])
         );
         const config = DeepLink.decodePayload(payload);
         assert.equal(config.hostname, 'vpn.example.com');

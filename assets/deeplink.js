@@ -191,6 +191,7 @@
             anti_dpi: false,
             client_random_prefix: null,
             client_random_auth_key: null,
+            tls_profile: null,
             subscription_url: null,
             dns_upstreams: []
         };
@@ -294,6 +295,9 @@
                         throw new Error('Invalid client_random_auth_key: ' + authKeyError);
                     }
                     break;
+                case 0x10: // tls_profile
+                    config.tls_profile = decoder.decode(value) || null;
+                    break;
                 default:
                     // Unknown tags are ignored for forward compatibility.
                     break;
@@ -360,6 +364,7 @@
 
         var clientRandomPrefix = config.client_random_prefix || null;
         var clientRandomAuthKey = config.client_random_auth_key || null;
+        var tlsProfile = config.tls_profile || null;
         if (clientRandomPrefix) {
             var prefixError = validateClientRandomPrefix(clientRandomPrefix);
             if (prefixError) throw new Error(prefixError);
@@ -385,6 +390,7 @@
         });
         if (clientRandomPrefix) chunks.push(writeTLVString(0x0B, clientRandomPrefix));
         if (clientRandomAuthKey) chunks.push(writeTLVString(0x0F, clientRandomAuthKey));
+        if (tlsProfile && tlsProfile !== 'chrome') chunks.push(writeTLVString(0x10, tlsProfile));
         if (config.custom_sni) chunks.push(writeTLVString(0x03, config.custom_sni));
         if (!hasIpv6) chunks.push(writeTLVBool(0x04, false));
         if (config.skip_verification) chunks.push(writeTLVBool(0x07, true));
