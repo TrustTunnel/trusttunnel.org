@@ -7,6 +7,7 @@
     <meta name="description" content="Import TrustTunnel VPN configuration into the app by scanning a QR code.">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="assets/deeplink.js"></script>
     <link rel="icon" type="image/png" href="assets/logo.png">
 </head>
 <body class="min-h-screen flex flex-col bg-white text-gray-900">
@@ -47,9 +48,25 @@
 
             <!-- Generator form state -->
             <div id="generator-section" class="hidden">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2 text-center">Create TrustTunnel Configuration</h1>
-                <p class="text-gray-600 text-center mb-8">Fill in the fields below to generate a QR code for importing into the TrustTunnel app.</p>
+                <h1 id="generator-title" class="text-3xl font-bold text-gray-900 mb-2 text-center">Create TrustTunnel Configuration</h1>
+                <p id="generator-subtitle" class="text-gray-600 text-center mb-8">Fill in the fields below to generate a QR code for importing into the TrustTunnel app.</p>
+                <div id="subscription-note" class="hidden max-w-xl mx-auto mb-5 text-sm text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                    <p>This configuration uses a subscription URL. The app downloads the connection settings from the server. The static fields below are only a fallback for the first download.</p>
+                    <button type="button" id="toggle-fallback-btn" class="mt-2 font-medium text-blue-700 hover:text-blue-900 underline" aria-expanded="false">Show static fallback parameters</button>
+                </div>
                 <form id="generator-form" class="max-w-xl mx-auto space-y-5">
+                    <div class="rounded-lg border border-gray-200 p-4 space-y-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="gen-use-subscription" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <span class="ml-2 text-sm font-medium text-gray-700">Use a subscription URL</span>
+                        </label>
+                        <div id="subscription-url-fields" class="hidden">
+                            <label for="gen-subscription-url" class="block text-sm font-medium text-gray-700 mb-1">Subscription URL</label>
+                            <input type="text" id="gen-subscription-url" autocomplete="off" spellcheck="false" placeholder="https://user:password@vpn.example.com/subscription" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="mt-1 text-xs text-gray-500">The URL must start with https://. It contains the client credentials. The client must support subscription URLs. The page cannot test the URL. Treat the generated link as a secret.</p>
+                        </div>
+                    </div>
+                    <div id="static-fields" class="space-y-5">
                     <!-- Server name -->
                     <div>
                         <label for="gen-name" class="block text-sm font-medium text-gray-700 mb-1">Server name</label>
@@ -57,13 +74,13 @@
                     </div>
                     <!-- Address -->
                     <div>
-                        <label for="gen-addresses" class="block text-sm font-medium text-gray-700 mb-1">Address <span class="text-red-500">*</span></label>
+                        <label for="gen-addresses" class="block text-sm font-medium text-gray-700 mb-1">Address <span class="required-mark text-red-500">*</span></label>
                         <input type="text" id="gen-addresses" placeholder="1.2.3.4:443, 5.6.7.8:443" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <p class="mt-1 text-xs text-gray-500">If port is not specified, 443 is used. Comma-separated for multiple addresses.</p>
                     </div>
                     <!-- Domain name from server certificate -->
                     <div>
-                        <label for="gen-hostname" class="block text-sm font-medium text-gray-700 mb-1">Domain name from server certificate <span class="text-red-500">*</span></label>
+                        <label for="gen-hostname" class="block text-sm font-medium text-gray-700 mb-1">Domain name from server certificate <span class="required-mark text-red-500">*</span></label>
                         <input type="text" id="gen-hostname" placeholder="vpn.example.com" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <!-- Custom SNI -->
@@ -73,12 +90,12 @@
                     </div>
                     <!-- Username -->
                     <div>
-                        <label for="gen-username" class="block text-sm font-medium text-gray-700 mb-1">Username <span class="text-red-500">*</span></label>
+                        <label for="gen-username" class="block text-sm font-medium text-gray-700 mb-1">Username <span class="required-mark text-red-500">*</span></label>
                         <input type="text" id="gen-username" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <!-- Password -->
                     <div>
-                        <label for="gen-password" class="block text-sm font-medium text-gray-700 mb-1">Password <span class="text-red-500">*</span></label>
+                        <label for="gen-password" class="block text-sm font-medium text-gray-700 mb-1">Password <span class="required-mark text-red-500">*</span></label>
                         <input type="password" id="gen-password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <!-- Protocol -->
@@ -97,8 +114,14 @@
                     <!-- Client Random, hex sequence -->
                     <div>
                         <label for="gen-prefix" class="block text-sm font-medium text-gray-700 mb-1">Client Random, hex sequence</label>
-                        <input type="text" id="gen-prefix" placeholder="abcdef, 0a0b0c/0f0f0f" maxlength="64" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <input type="text" id="gen-prefix" placeholder="a0b0/f0f0" maxlength="64" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <p class="mt-1 text-xs text-gray-500">Max length &mdash; 64 characters</p>
+                    </div>
+                    <!-- Client Random auth key, hex sequence -->
+                    <div>
+                        <label for="gen-auth-key" class="block text-sm font-medium text-gray-700 mb-1">Client Random auth key, hex sequence</label>
+                        <input type="text" id="gen-auth-key" placeholder="00112233445566778899aabbccddeeff" maxlength="64" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">Max length &mdash; 64 characters. If set together with Client Random, the auth key takes priority.</p>
                     </div>
                     <!-- Self-signed certificate, PEM file -->
                     <div>
@@ -119,6 +142,7 @@
                             <input type="checkbox" id="gen-skipverify" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                             <span class="ml-2 text-sm text-gray-700">Skip certificate verification</span>
                         </label>
+                    </div>
                     </div>
                     <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">Generate QR Code</button>
                 </form>
@@ -254,166 +278,10 @@
     (function () {
         'use strict';
 
-        // --- Base64url decoding ---
-        function base64urlToBytes(str) {
-            // Restore standard Base64: replace URL-safe chars and add padding
-            var b64 = str.replace(/-/g, '+').replace(/_/g, '/');
-            while (b64.length % 4 !== 0) {
-                b64 += '=';
-            }
-            var binary = atob(b64);
-            var bytes = new Uint8Array(binary.length);
-            for (var i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            return bytes;
-        }
-
-        // --- TLS varint decoding (RFC 9000 §16) ---
-        function readVarint(buf, offset) {
-            if (offset >= buf.length) {
-                throw new Error('Unexpected end of buffer reading varint');
-            }
-            var first = buf[offset];
-            var prefix = first >> 6;
-            var len = 1 << prefix; // 1, 2, 4, or 8 bytes
-            if (offset + len > buf.length) {
-                throw new Error('Unexpected end of buffer reading varint');
-            }
-            var value = first & 0x3f;
-            for (var i = 1; i < len; i++) {
-                value = value * 256 + buf[offset + i];
-            }
-            return { value: value, bytesRead: len };
-        }
-
-        // --- TLV parser ---
-        var FIELD_TAGS = {
-            0x00: 'version',
-            0x01: 'hostname',
-            0x02: 'addresses',
-            0x03: 'custom_sni',
-            0x04: 'has_ipv6',
-            0x05: 'username',
-            0x06: 'password',
-            0x07: 'skip_verification',
-            0x08: 'certificate',
-            0x09: 'upstream_protocol',
-            0x0A: 'anti_dpi',
-            0x0B: 'client_random_prefix',
-            0x0C: 'name',
-            0x0D: 'dns_upstreams',
-        };
-
-        var UPSTREAM_PROTOCOL_MAP = {
-            0x01: 'HTTP/2',
-            0x02: 'HTTP/3',
-        };
-
-        function parseTLV(bytes) {
-            var config = {
-                name: null,
-                hostname: null,
-                addresses: [],
-                custom_sni: null,
-                has_ipv6: true,
-                username: null,
-                password: null,
-                skip_verification: false,
-                certificate: false,
-                upstream_protocol: 'HTTP/2',
-                anti_dpi: false,
-                client_random_prefix: null,
-                dns_upstreams: [],
-            };
-
-            var offset = 0;
-            var decoder = new TextDecoder('utf-8');
-
-            while (offset < bytes.length) {
-                var tagResult = readVarint(bytes, offset);
-                offset += tagResult.bytesRead;
-
-                var lenResult = readVarint(bytes, offset);
-                offset += lenResult.bytesRead;
-
-                var tag = tagResult.value;
-                var len = lenResult.value;
-
-                if (offset + len > bytes.length) {
-                    throw new Error('TLV value exceeds buffer length');
-                }
-
-                var value = bytes.slice(offset, offset + len);
-                offset += len;
-
-                var fieldName = FIELD_TAGS[tag];
-                if (!fieldName) {
-                    // Unknown tag — skip per spec
-                    continue;
-                }
-
-                switch (tag) {
-                    case 0x01: // hostname
-                        config.hostname = decoder.decode(value);
-                        break;
-                    case 0x02: // addresses (may repeat)
-                        config.addresses.push(decoder.decode(value));
-                        break;
-                    case 0x03: // custom_sni
-                        config.custom_sni = decoder.decode(value);
-                        break;
-                    case 0x04: // has_ipv6
-                        config.has_ipv6 = value[0] === 0x01;
-                        break;
-                    case 0x05: // username
-                        config.username = decoder.decode(value);
-                        break;
-                    case 0x06: // password
-                        config.password = decoder.decode(value);
-                        break;
-                    case 0x07: // skip_verification
-                        config.skip_verification = value[0] === 0x01;
-                        break;
-                    case 0x08: // certificate (binary DER)
-                        config.certificate = true;
-                        break;
-                    case 0x09: // upstream_protocol
-                        config.upstream_protocol = UPSTREAM_PROTOCOL_MAP[value[0]] || 'Unknown';
-                        break;
-                    case 0x0A: // anti_dpi
-                        config.anti_dpi = value[0] === 0x01;
-                        break;
-                    case 0x0B: // client_random_prefix
-                        config.client_random_prefix = decoder.decode(value);
-                        break;
-                    case 0x0C: // name
-                        config.name = decoder.decode(value);
-                        break;
-                    case 0x0D: // dns_upstreams (String[] — length-prefixed sequence)
-                        var dnsOffset = 0;
-                        while (dnsOffset < value.length) {
-                            var dnsLenResult = readVarint(value, dnsOffset);
-                            dnsOffset += dnsLenResult.bytesRead;
-
-                            if (dnsOffset + dnsLenResult.value > value.length) {
-                                throw new Error('dns_upstreams entry exceeds buffer length');
-                            }
-                            var dnsEntry = decoder.decode(value.slice(dnsOffset, dnsOffset + dnsLenResult.value));
-                            dnsOffset += dnsLenResult.value;
-                            config.dns_upstreams.push(dnsEntry);
-                        }
-                        break;
-                }
-            }
-
-            // Validate required fields
-            if (!config.hostname) throw new Error('Missing required field: hostname');
-            if (config.addresses.length === 0) throw new Error('Missing required field: addresses');
-            if (!config.username) throw new Error('Missing required field: username');
-            if (!config.password) throw new Error('Missing required field: password');
-
-            return config;
+        var DeepLink = window.TrustTunnelDeepLink;
+        if (!DeepLink) {
+            showError('The deep-link module failed to load. Reload the page.');
+            return;
         }
 
         // --- Mask credentials for display ---
@@ -426,36 +294,61 @@
         function renderConfig(config) {
             var container = document.getElementById('config-details');
             var rows = [];
+
             if (config.name) {
                 rows.push({ label: 'Server name', value: config.name });
             }
-            rows.push(
-                { label: 'Address', value: config.addresses.join(', ') },
-                { label: 'Domain name from server certificate', value: config.hostname },
-            );
+            if (config.subscription_url) {
+                rows.push({ label: 'Subscription URL', value: config.subscription_url });
+            }
+
+            var hasStatic = config.addresses.length > 0 || !!config.hostname ||
+                !!config.username || !!config.password;
+
+            if (hasStatic) {
+                if (config.addresses.length > 0) {
+                    rows.push({ label: 'Address', value: config.addresses.join(', ') });
+                }
+                if (config.hostname) {
+                    rows.push({ label: 'Domain name from server certificate', value: config.hostname });
+                }
+            }
             if (config.custom_sni) {
                 rows.push({ label: 'Custom SNI', value: config.custom_sni });
             }
-            rows.push(
-                { label: 'Username', value: maskString(config.username) },
-                { label: 'Password', value: maskString(config.password) },
-                { label: 'Protocol', value: config.upstream_protocol }
-            );
+            if (hasStatic) {
+                if (config.username) {
+                    rows.push({ label: 'Username', value: maskString(config.username) });
+                }
+                if (config.password) {
+                    rows.push({ label: 'Password', value: maskString(config.password) });
+                }
+                rows.push({ label: 'Protocol', value: config.upstream_protocol });
+            }
+
             if (config.dns_upstreams && config.dns_upstreams.length > 0) {
                 rows.push({ label: 'DNS server addresses', value: config.dns_upstreams.join(', ') });
             }
             if (config.client_random_prefix) {
                 rows.push({ label: 'Client Random', value: config.client_random_prefix });
             }
-            if (config.certificate) {
+            if (config.client_random_auth_key) {
+                rows.push({ label: 'Client Random auth key', value: maskString(config.client_random_auth_key) });
+            }
+            if (config.certificate_der) {
                 rows.push({ label: 'Self-signed certificate', value: 'Custom certificate included' });
             }
-            rows.push({ label: 'Allow IPv6 connections via the server', value: config.has_ipv6 ? 'Yes' : 'No' });
+            if (hasStatic || !config.has_ipv6) {
+                rows.push({ label: 'Allow IPv6 connections via the server', value: config.has_ipv6 ? 'Yes' : 'No' });
+            }
             if (config.anti_dpi) {
                 rows.push({ label: 'Anti-DPI', value: 'Enabled' });
             }
             if (config.skip_verification) {
                 rows.push({ label: 'Skip certificate verification', value: 'Yes' });
+            }
+            if (config.subscription_url && !hasStatic) {
+                rows.push({ label: 'Connection parameters', value: 'Downloaded from the subscription URL' });
             }
 
             container.innerHTML = rows.map(function (row) {
@@ -501,148 +394,40 @@
             showSection('generator-section');
         }
 
-        // --- TLV encoding (reverse of parser) ---
-        function writeVarint(value) {
-            if (value <= 0x3f) {
-                return [value];
-            } else if (value <= 0x3fff) {
-                return [(value >> 8) | 0x40, value & 0xff];
-            } else if (value <= 0x3fffffff) {
-                return [
-                    (value >> 24) | 0x80,
-                    (value >> 16) & 0xff,
-                    (value >> 8) & 0xff,
-                    value & 0xff
-                ];
-            }
-            throw new Error('Varint value too large');
-        }
-
-        function stringToBytes(str) {
-            return new TextEncoder().encode(str);
-        }
-
-        function writeTLV(tag, valueBytes) {
-            var tagBytes = writeVarint(tag);
-            var lenBytes = writeVarint(valueBytes.length);
-            var result = new Uint8Array(tagBytes.length + lenBytes.length + valueBytes.length);
-            result.set(tagBytes, 0);
-            result.set(lenBytes, tagBytes.length);
-            result.set(valueBytes, tagBytes.length + lenBytes.length);
-            return result;
-        }
-
-        function writeTLVString(tag, str) {
-            return writeTLV(tag, stringToBytes(str));
-        }
-
-        function writeTLVBool(tag, val) {
-            return writeTLV(tag, new Uint8Array([val ? 0x01 : 0x00]));
-        }
-
-        function bytesToBase64url(bytes) {
-            var binary = '';
-            for (var i = 0; i < bytes.length; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return btoa(binary)
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_')
-                .replace(/=+$/, '');
-        }
-
-        function pemToderBytes(pem) {
-            // Decode each PEM block to DER separately, then concatenate all DER bytes
-            var lines = pem.split('\n');
-            var derChunks = [];
-            var b64 = '';
-            var inBlock = false;
-            for (var i = 0; i < lines.length; i++) {
-                var line = lines[i].trim();
-                if (line === '-----BEGIN CERTIFICATE-----') {
-                    inBlock = true;
-                    b64 = '';
-                    continue;
-                }
-                if (line === '-----END CERTIFICATE-----') {
-                    inBlock = false;
-                    if (b64) {
-                        var binary = atob(b64);
-                        var bytes = new Uint8Array(binary.length);
-                        for (var j = 0; j < binary.length; j++) {
-                            bytes[j] = binary.charCodeAt(j);
-                        }
-                        derChunks.push(bytes);
-                    }
-                    b64 = '';
-                    continue;
-                }
-                if (inBlock && line.length > 0) {
-                    b64 += line;
-                }
-            }
-            if (derChunks.length === 0) throw new Error('No valid PEM certificate data found');
-            // Concatenate all DER-encoded certificates
-            var totalLen = 0;
-            derChunks.forEach(function (c) { totalLen += c.length; });
-            var result = new Uint8Array(totalLen);
-            var offset = 0;
-            derChunks.forEach(function (c) {
-                result.set(c, offset);
-                offset += c.length;
+        function setStaticFieldsRequired(required) {
+            ['gen-addresses', 'gen-hostname', 'gen-username', 'gen-password'].forEach(function (id) {
+                document.getElementById(id).required = required;
             });
-            return result;
+            var marks = document.querySelectorAll('.required-mark');
+            for (var i = 0; i < marks.length; i++) {
+                marks[i].classList.toggle('hidden', !required);
+            }
         }
 
-        function buildPayload(opts) {
-            var chunks = [];
-            // Version 1 (current spec version)
-            chunks.push(writeTLV(0x00, new Uint8Array([0x01])));
-            if (opts.name) chunks.push(writeTLVString(0x0C, opts.name));
-            chunks.push(writeTLVString(0x01, opts.hostname));
-            opts.addresses.forEach(function (addr) {
-                chunks.push(writeTLVString(0x02, addr));
-            });
-            chunks.push(writeTLVString(0x05, opts.username));
-            chunks.push(writeTLVString(0x06, opts.password));
-            chunks.push(writeTLV(0x09, new Uint8Array([opts.upstream_protocol])));
-            if (opts.custom_sni) chunks.push(writeTLVString(0x03, opts.custom_sni));
-            if (opts.client_random_prefix) chunks.push(writeTLVString(0x0B, opts.client_random_prefix));
-            if (!opts.has_ipv6) chunks.push(writeTLVBool(0x04, false));
-            if (opts.anti_dpi) chunks.push(writeTLVBool(0x0A, true));
-            if (opts.skip_verification) chunks.push(writeTLVBool(0x07, true));
-            if (opts.certificate) chunks.push(writeTLV(0x08, opts.certificate));
-            if (opts.dns_upstreams && opts.dns_upstreams.length > 0) {
-                // Encode as length-prefixed sequence
-                var dnsChunks = [];
-                var totalLen = 0;
-                opts.dns_upstreams.forEach(function (dns) {
-                    var dnsBytes = stringToBytes(dns);
-                    var dnsLenBytes = writeVarint(dnsBytes.length);
-                    dnsChunks.push({ len: dnsLenBytes, data: dnsBytes });
-                    totalLen += dnsLenBytes.length + dnsBytes.length;
-                });
-                var dnsValue = new Uint8Array(totalLen);
-                var offset = 0;
-                dnsChunks.forEach(function (c) {
-                    dnsValue.set(c.len, offset);
-                    offset += c.len.length;
-                    dnsValue.set(c.data, offset);
-                    offset += c.data.length;
-                });
-                chunks.push(writeTLV(0x0D, dnsValue));
-            }
+        function setFallbackVisible(visible) {
+            document.getElementById('static-fields').classList.toggle('hidden', !visible);
+            var toggle = document.getElementById('toggle-fallback-btn');
+            toggle.textContent = visible ? 'Hide static fallback parameters' : 'Show static fallback parameters';
+            toggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
+        }
 
-            // Concatenate all chunks
-            var totalLength = 0;
-            chunks.forEach(function (c) { totalLength += c.length; });
-            var result = new Uint8Array(totalLength);
-            var off = 0;
-            chunks.forEach(function (c) {
-                result.set(c, off);
-                off += c.length;
-            });
-            return bytesToBase64url(result);
+        function setSubscriptionMode(enabled) {
+            document.getElementById('subscription-note').classList.toggle('hidden', !enabled);
+            document.getElementById('subscription-url-fields').classList.toggle('hidden', !enabled);
+            document.getElementById('generator-title').textContent = enabled
+                ? 'Subscription Configuration'
+                : 'Create TrustTunnel Configuration';
+            document.getElementById('generator-subtitle').textContent = enabled
+                ? 'The app downloads the connection settings from the subscription URL. Generate the QR code, or edit the optional static fallback parameters.'
+                : 'Fill in the fields below to generate a QR code for importing into the TrustTunnel app.';
+            setStaticFieldsRequired(!enabled);
+            setFallbackVisible(!enabled);
+        }
+
+        function resetGeneratorState() {
+            document.getElementById('gen-use-subscription').checked = false;
+            document.getElementById('gen-subscription-url').value = '';
+            setSubscriptionMode(false);
         }
 
         // --- Extract payload from hash (#tt=<payload>) ---
@@ -659,10 +444,16 @@
         // --- Extract payload from a tt:// link ---
         function getPayloadFromLink(link) {
             var trimmed = link.trim();
-            var prefix = 'tt://?';
-            if (trimmed.substring(0, prefix.length) !== prefix) return null;
-            var payload = trimmed.substring(prefix.length);
-            return payload.length > 0 ? payload : null;
+            if (trimmed.indexOf('tt://?') === 0) {
+                var payload = trimmed.slice(6);
+                return payload.length > 0 ? payload : null;
+            }
+            // Legacy format: tt://<base64url>, without the query marker.
+            if (trimmed.indexOf('tt://') === 0) {
+                var legacyPayload = trimmed.slice(5);
+                return legacyPayload.length > 0 ? legacyPayload : null;
+            }
+            return null;
         }
 
         // --- QR size state ---
@@ -698,8 +489,7 @@
 
         // --- Render everything for a given payload ---
         function renderPayload(payload) {
-            var bytes = base64urlToBytes(payload);
-            var config = parseTLV(bytes);
+            var config = DeepLink.decodePayload(payload);
             currentConfig = config;
             currentTTLink = 'tt://?' + payload;
 
@@ -719,10 +509,16 @@
             document.getElementById('gen-protocol').value = config.upstream_protocol === 'HTTP/3' ? '2' : '1';
             document.getElementById('gen-dns').value = (config.dns_upstreams || []).join('\n');
             document.getElementById('gen-prefix').value = config.client_random_prefix || '';
-            document.getElementById('gen-certificate').value = '';
+            document.getElementById('gen-auth-key').value = config.client_random_auth_key || '';
+            document.getElementById('gen-certificate').value = config.certificate_der ? DeepLink.derToPem(config.certificate_der) : '';
             document.getElementById('gen-ipv6').checked = config.has_ipv6;
             document.getElementById('gen-antidpi').checked = config.anti_dpi;
             document.getElementById('gen-skipverify').checked = config.skip_verification;
+
+            var subscriptionUrl = config.subscription_url || '';
+            document.getElementById('gen-use-subscription').checked = !!subscriptionUrl;
+            document.getElementById('gen-subscription-url').value = subscriptionUrl;
+            setSubscriptionMode(!!subscriptionUrl);
         }
 
         // --- Form handler ---
@@ -744,9 +540,7 @@
         });
 
         // --- Download page for offline use ---
-        document.getElementById('download-page-link').addEventListener('click', function (e) {
-            e.preventDefault();
-            var html = document.documentElement.outerHTML;
+        function downloadPageHtml(html) {
             var blob = new Blob(['<!DOCTYPE html>\n' + html], { type: 'text/html' });
             var url = URL.createObjectURL(blob);
             var a = document.createElement('a');
@@ -756,20 +550,63 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('download-page-link').addEventListener('click', function (e) {
+            e.preventDefault();
+            var moduleScript = document.querySelector('script[src="assets/deeplink.js"]');
+            if (!moduleScript) {
+                // The module is already inline, or this page has no external module.
+                downloadPageHtml(document.documentElement.outerHTML);
+                return;
+            }
+            fetch(moduleScript.src)
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Failed to load the deep-link module.');
+                    }
+                    return response.text();
+                })
+                .then(function (source) {
+                    var inlineScript = '<script>\n' + source.split('<\/script>').join('<\\/script>') + '\n<\/script>';
+                    var html = document.documentElement.outerHTML;
+                    html = html.split(moduleScript.outerHTML).join(inlineScript);
+                    downloadPageHtml(html);
+                })
+                .catch(function (err) {
+                    showError(err.message || 'Failed to prepare the page for offline use.');
+                });
         });
 
         // --- Open generator form ---
         document.getElementById('open-generator-link').addEventListener('click', function (e) {
             e.preventDefault();
+            resetGeneratorState();
             showGenerator();
+        });
+
+        // --- Toggle static fallback parameters ---
+        document.getElementById('toggle-fallback-btn').addEventListener('click', function () {
+            setFallbackVisible(document.getElementById('static-fields').classList.contains('hidden'));
+        });
+
+        // --- Subscription URL mode ---
+        document.getElementById('gen-use-subscription').addEventListener('change', function () {
+            setSubscriptionMode(this.checked);
         });
 
         // --- Edit configuration ---
         document.getElementById('edit-config-btn').addEventListener('click', function () {
-            if (currentConfig) {
-                prefillGenerator(currentConfig);
+            if (!currentConfig) {
+                showInput();
+                return;
             }
-            showGenerator();
+            try {
+                prefillGenerator(currentConfig);
+                showGenerator();
+            } catch (err) {
+                showError(err.message || 'Failed to prepare the configuration for editing.');
+            }
         });
 
         // --- Back to input from generator ---
@@ -785,16 +622,60 @@
             var addressesRaw = document.getElementById('gen-addresses').value.trim();
             var username = document.getElementById('gen-username').value.trim();
             var password = document.getElementById('gen-password').value;
+            var useSubscription = document.getElementById('gen-use-subscription').checked;
+            var subscriptionUrl = useSubscription
+                ? document.getElementById('gen-subscription-url').value.trim()
+                : null;
 
-            if (!hostname || !addressesRaw || !username || !password) {
-                showError('Please fill in all required fields.');
+            if (useSubscription && !subscriptionUrl) {
+                showError('Enter the subscription URL.');
+                return;
+            }
+            if (subscriptionUrl && subscriptionUrl.indexOf('https://') !== 0) {
+                showError('The subscription URL must start with https://.');
                 return;
             }
 
-            var addresses = addressesRaw.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-            if (addresses.length === 0) {
+            if (!subscriptionUrl) {
+                if (!hostname || !addressesRaw || !username || !password) {
+                    showError('Please fill in all required fields.');
+                    return;
+                }
+            }
+
+            var addresses = addressesRaw ? addressesRaw.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : [];
+            if (!subscriptionUrl && addresses.length === 0) {
                 showError('Please provide at least one address.');
                 return;
+            }
+
+            var clientRandomPrefix = document.getElementById('gen-prefix').value.trim() || null;
+            var clientRandomAuthKey = document.getElementById('gen-auth-key').value.trim() || null;
+
+            if (clientRandomPrefix) {
+                var prefixError = DeepLink.validateClientRandomPrefix(clientRandomPrefix);
+                if (prefixError) {
+                    showError(prefixError);
+                    return;
+                }
+            }
+            if (clientRandomAuthKey) {
+                var authKeyError = DeepLink.validateHexKey(clientRandomAuthKey, 'Client Random auth key');
+                if (authKeyError) {
+                    showError(authKeyError);
+                    return;
+                }
+            }
+
+            var certificate = null;
+            var pem = document.getElementById('gen-certificate').value.trim();
+            if (pem) {
+                try {
+                    certificate = DeepLink.pemToDer(pem);
+                } catch (err) {
+                    showError(err.message || 'Invalid PEM certificate data.');
+                    return;
+                }
             }
 
             var opts = {
@@ -805,24 +686,22 @@
                 password: password,
                 upstream_protocol: parseInt(document.getElementById('gen-protocol').value, 10),
                 custom_sni: document.getElementById('gen-sni').value.trim() || null,
-                client_random_prefix: document.getElementById('gen-prefix').value.trim() || null,
+                client_random_prefix: clientRandomPrefix,
+                client_random_auth_key: clientRandomAuthKey,
                 has_ipv6: document.getElementById('gen-ipv6').checked,
                 anti_dpi: document.getElementById('gen-antidpi').checked,
                 skip_verification: document.getElementById('gen-skipverify').checked,
-                certificate: (function () {
-                    var pem = document.getElementById('gen-certificate').value.trim();
-                    if (!pem) return null;
-                    return pemToderBytes(pem);
-                })(),
+                certificate_der: certificate,
                 dns_upstreams: (function () {
                     var raw = document.getElementById('gen-dns').value.trim();
                     if (!raw) return [];
                     return raw.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
-                })()
+                })(),
+                subscription_url: subscriptionUrl
             };
 
             try {
-                var payload = buildPayload(opts);
+                var payload = DeepLink.encodePayload(opts);
                 renderPayload(payload);
                 window.location.hash = 'tt=' + payload;
             } catch (err) {
