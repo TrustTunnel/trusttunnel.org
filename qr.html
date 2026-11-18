@@ -510,28 +510,7 @@
 
         // --- Prefill generator form from config ---
         function setTlsProfileField(value) {
-            var select = document.getElementById('gen-tls-profile');
-            var customOptions = select.querySelectorAll('option[data-custom]');
-            for (var i = 0; i < customOptions.length; i++) {
-                customOptions[i].parentNode.removeChild(customOptions[i]);
-            }
-
-            var profile = value || 'chrome';
-            var found = false;
-            for (var j = 0; j < select.options.length; j++) {
-                if (select.options[j].value === profile) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                var option = document.createElement('option');
-                option.value = profile;
-                option.textContent = profile + ' (custom)';
-                option.setAttribute('data-custom', 'true');
-                select.appendChild(option);
-            }
-            select.value = profile;
+            document.getElementById('gen-tls-profile').value = value || 'chrome';
         }
 
         function prefillGenerator(config) {

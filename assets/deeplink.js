@@ -34,6 +34,26 @@
         'HTTP/3': PROTOCOL_HTTP3
     };
 
+    // tls_profile values, see DEEP_LINK.md tag 0x10.
+    var TLS_PROFILE_NAMES = {
+        0x00: 'chrome',
+        0x01: 'chrome_canary',
+        0x02: 'safari',
+        0x03: 'firefox',
+        0x04: 'okhttp',
+        0x05: 'openssl',
+        0x06: 'boringssl'
+    };
+    var TLS_PROFILE_VALUES = {
+        chrome: 0x00,
+        chrome_canary: 0x01,
+        safari: 0x02,
+        firefox: 0x03,
+        okhttp: 0x04,
+        openssl: 0x05,
+        boringssl: 0x06
+    };
+
     // --- Base64url (RFC 4648 section 5, no padding) ---
     function base64urlToBytes(str) {
         var b64 = String(str).replace(/-/g, '+').replace(/_/g, '/');
@@ -296,7 +316,14 @@
                     }
                     break;
                 case 0x10: // tls_profile
-                    config.tls_profile = decoder.decode(value) || null;
+                    if (value.length !== 1) {
+                        throw new Error('Invalid tls_profile: expected one byte.');
+                    }
+                    var profileName = TLS_PROFILE_NAMES[value[0]];
+                    if (!profileName) {
+                        throw new Error('Unknown tls_profile value: ' + value[0]);
+                    }
+                    config.tls_profile = profileName;
                     break;
                 default:
                     // Unknown tags are ignored for forward compatibility.
@@ -340,6 +367,13 @@
             throw new Error('Unsupported upstream_protocol: ' + value);
         }
         return resolved;
+    }
+
+    function tlsProfileByte(value) {
+        if (!Object.prototype.hasOwnProperty.call(TLS_PROFILE_VALUES, value)) {
+            throw new Error('Unsupported tls_profile: ' + value);
+        }
+        return TLS_PROFILE_VALUES[value];
     }
 
     function encodePayload(config) {
@@ -390,7 +424,9 @@
         });
         if (clientRandomPrefix) chunks.push(writeTLVString(0x0B, clientRandomPrefix));
         if (clientRandomAuthKey) chunks.push(writeTLVString(0x0F, clientRandomAuthKey));
-        if (tlsProfile && tlsProfile !== 'chrome') chunks.push(writeTLVString(0x10, tlsProfile));
+        if (tlsProfile && tlsProfile !== 'chrome') {
+            chunks.push(writeTLV(0x10, new Uint8Array([tlsProfileByte(tlsProfile)])));
+        }
         if (config.custom_sni) chunks.push(writeTLVString(0x03, config.custom_sni));
         if (!hasIpv6) chunks.push(writeTLVBool(0x04, false));
         if (config.skip_verification) chunks.push(writeTLVBool(0x07, true));

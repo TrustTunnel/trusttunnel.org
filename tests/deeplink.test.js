@@ -11,7 +11,7 @@ const MINIMAL_URI = 'tt://?AAECAQ92cG4uZXhhbXBsZS5jb20FBWFsaWNlBglzZWNyZXQxMjMCC
 const NAMED_URI = 'tt://?AAECAQ92cG4uZXhhbXBsZS5jb20FBWFsaWNlBglzZWNyZXQxMjMCCzEuMi4zLjQ6NDQzDAlNeSBTZXJ2ZXINEAcxLjEuMS4xBzguOC44Ljg';
 const SUBSCRIPTION_ONLY_URI = 'tt://?AAECDjFodHRwczovL2FsaWNlOnMzY3JldEB2cG4uZXhhbXBsZS5jb20vc3Vic2NyaXB0aW9u';
 const PREFIX_URI = 'tt://?AAECAQ9jcnAuZXhhbXBsZS5jb20FCHRlc3R1c2VyBgh0ZXN0cGFzcwIQMTAuMjAuMzAuNDA6ODQ0MwsKYWFiYmNjZGRlZQ';
-const PROFILE_URI = 'tt://?AAECARNwcm9maWxlLmV4YW1wbGUuY29tBQh0ZXN0dXNlcgYIdGVzdHBhc3MCEDEwLjIwLjMwLjQwOjg0NDMQB2ZpcmVmb3g';
+const PROFILE_URI = 'tt://?AAECARNwcm9maWxlLmV4YW1wbGUuY29tBQh0ZXN0dXNlcgYIdGVzdHBhc3MCEDEwLjIwLjMwLjQwOjg0NDMQAQM';
 const SUBSCRIPTION_WITH_FALLBACK_URI = 'tt://?AAECAQ92cG4uZXhhbXBsZS5jb20FBWFsaWNlBgZzM2NyZXQCCzEuMi4zLjQ6NDQzDjFodHRwczovL2FsaWNlOnMzY3JldEB2cG4uZXhhbXBsZS5jb20vc3Vic2NyaXB0aW9u';
 
 // Shared Android/Windows client fixture. It uses the legacy tt://<payload>
@@ -225,10 +225,9 @@ describe('golden URIs', () => {
         assert.equal(DeepLink.encode(config), MINIMAL_URI);
     });
 
-    it('round-trips an unknown tls_profile', () => {
+    it('rejects an unknown tls_profile', () => {
         const config = Object.assign(minimalConfig(), { tls_profile: 'future_profile' });
-        const decoded = DeepLink.decode(DeepLink.encode(config));
-        assert.equal(decoded.tls_profile, 'future_profile');
+        assert.throws(() => DeepLink.encode(config), /Unsupported tls_profile/);
     });
 
     it('encodes a subscription URL with static fallback exactly like the server reference', () => {
@@ -678,6 +677,25 @@ describe('malformed payloads', () => {
         );
         const config = DeepLink.decodePayload(payload);
         assert.equal(config.hostname, 'vpn.example.com');
+    });
+
+    it('rejects an unknown tls_profile byte', () => {
+        const payload = payloadFromTlvs(
+            [tlv(0x00, Uint8Array.from([2]))].concat(required, [tlv(0x10, Uint8Array.from([0x07]))])
+        );
+        assert.throws(() => DeepLink.decodePayload(payload), /Unknown tls_profile/);
+    });
+
+    it('rejects a tls_profile with the wrong length', () => {
+        const empty = payloadFromTlvs(
+            [tlv(0x00, Uint8Array.from([2]))].concat(required, [tlv(0x10, new Uint8Array([]))])
+        );
+        assert.throws(() => DeepLink.decodePayload(empty), /Invalid tls_profile/);
+
+        const long = payloadFromTlvs(
+            [tlv(0x00, Uint8Array.from([2]))].concat(required, [tlv(0x10, Uint8Array.from([0x03, 0x03]))])
+        );
+        assert.throws(() => DeepLink.decodePayload(long), /Invalid tls_profile/);
     });
 
     it('rejects a TLV value that exceeds the buffer', () => {
