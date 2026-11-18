@@ -291,6 +291,17 @@
             return;
         }
 
+        // --- Display names for tls_profile values ---
+        var TLS_PROFILE_LABELS = {
+            chrome: 'Chrome',
+            chrome_canary: 'Chrome Canary',
+            safari: 'Safari',
+            firefox: 'Firefox',
+            okhttp: 'OkHttp',
+            openssl: 'OpenSSL',
+            boringssl: 'BoringSSL (no mimicry)'
+        };
+
         // --- Mask credentials for display ---
         function maskString(str) {
             if (!str || str.length <= 2) return '••••';
@@ -334,7 +345,10 @@
             }
 
             if (config.tls_profile) {
-                rows.push({ label: 'TLS fingerprint', value: config.tls_profile });
+                rows.push({
+                    label: 'TLS fingerprint',
+                    value: TLS_PROFILE_LABELS[config.tls_profile] || config.tls_profile
+                });
             }
             if (config.dns_upstreams && config.dns_upstreams.length > 0) {
                 rows.push({ label: 'DNS server addresses', value: config.dns_upstreams.join(', ') });
