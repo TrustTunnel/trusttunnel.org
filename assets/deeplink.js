@@ -34,6 +34,35 @@
         'HTTP/3': PROTOCOL_HTTP3
     };
 
+    // tls_profile values, see DEEP_LINK.md tag 0x10.
+    function tlsProfile(id, label) {
+        return Object.freeze({ id: id, label: label });
+    }
+    var TLS_PROFILE_CHROME = tlsProfile(0x00, 'Chrome');
+    var TLS_PROFILE_CHROME_CANARY = tlsProfile(0x01, 'Chrome Canary');
+    var TLS_PROFILE_SAFARI = tlsProfile(0x02, 'Safari');
+    var TLS_PROFILE_FIREFOX = tlsProfile(0x03, 'Firefox');
+    var TLS_PROFILE_OKHTTP = tlsProfile(0x04, 'OkHttp');
+    var TLS_PROFILE_OPENSSL = tlsProfile(0x05, 'OpenSSL');
+    var TLS_PROFILE_BORINGSSL = tlsProfile(0x06, 'BoringSSL');
+    var TLS_PROFILES = Object.freeze([
+        TLS_PROFILE_CHROME,
+        TLS_PROFILE_CHROME_CANARY,
+        TLS_PROFILE_SAFARI,
+        TLS_PROFILE_FIREFOX,
+        TLS_PROFILE_OKHTTP,
+        TLS_PROFILE_OPENSSL,
+        TLS_PROFILE_BORINGSSL
+    ]);
+
+    // Returns the TLS_PROFILES entry with this wire id, or null.
+    function tlsProfileById(id) {
+        for (var i = 0; i < TLS_PROFILES.length; i++) {
+            if (TLS_PROFILES[i].id === id) return TLS_PROFILES[i];
+        }
+        return null;
+    }
+
     // --- Base64url (RFC 4648 section 5, no padding) ---
     function base64urlToBytes(str) {
         var b64 = String(str).replace(/-/g, '+').replace(/_/g, '/');
@@ -191,6 +220,7 @@
             anti_dpi: false,
             client_random_prefix: null,
             client_random_auth_key: null,
+            tls_profile: null,
             subscription_url: null,
             dns_upstreams: []
         };
@@ -294,6 +324,16 @@
                         throw new Error('Invalid client_random_auth_key: ' + authKeyError);
                     }
                     break;
+                case 0x10: // tls_profile
+                    if (value.length !== 1) {
+                        throw new Error('Invalid tls_profile: expected one byte.');
+                    }
+                    var profile = tlsProfileById(value[0]);
+                    if (!profile) {
+                        throw new Error('Unknown tls_profile value: ' + value[0]);
+                    }
+                    config.tls_profile = profile;
+                    break;
                 default:
                     // Unknown tags are ignored for forward compatibility.
                     break;
@@ -360,6 +400,10 @@
 
         var clientRandomPrefix = config.client_random_prefix || null;
         var clientRandomAuthKey = config.client_random_auth_key || null;
+        var tlsProfile = config.tls_profile || null;
+        if (tlsProfile && TLS_PROFILES.indexOf(tlsProfile) < 0) {
+            throw new Error('Unsupported tls_profile: ' + JSON.stringify(tlsProfile));
+        }
         if (clientRandomPrefix) {
             var prefixError = validateClientRandomPrefix(clientRandomPrefix);
             if (prefixError) throw new Error(prefixError);
@@ -385,6 +429,9 @@
         });
         if (clientRandomPrefix) chunks.push(writeTLVString(0x0B, clientRandomPrefix));
         if (clientRandomAuthKey) chunks.push(writeTLVString(0x0F, clientRandomAuthKey));
+        if (tlsProfile && tlsProfile !== TLS_PROFILE_CHROME) {
+            chunks.push(writeTLV(0x10, new Uint8Array([tlsProfile.id])));
+        }
         if (config.custom_sni) chunks.push(writeTLVString(0x03, config.custom_sni));
         if (!hasIpv6) chunks.push(writeTLVBool(0x04, false));
         if (config.skip_verification) chunks.push(writeTLVBool(0x07, true));
@@ -527,6 +574,15 @@
 
     return {
         SUPPORTED_VERSION: SUPPORTED_VERSION,
+        TLS_PROFILE_CHROME: TLS_PROFILE_CHROME,
+        TLS_PROFILE_CHROME_CANARY: TLS_PROFILE_CHROME_CANARY,
+        TLS_PROFILE_SAFARI: TLS_PROFILE_SAFARI,
+        TLS_PROFILE_FIREFOX: TLS_PROFILE_FIREFOX,
+        TLS_PROFILE_OKHTTP: TLS_PROFILE_OKHTTP,
+        TLS_PROFILE_OPENSSL: TLS_PROFILE_OPENSSL,
+        TLS_PROFILE_BORINGSSL: TLS_PROFILE_BORINGSSL,
+        TLS_PROFILES: TLS_PROFILES,
+        tlsProfileById: tlsProfileById,
         decode: decode,
         decodePayload: decodePayload,
         encode: encode,

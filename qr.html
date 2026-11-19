@@ -106,6 +106,14 @@
                             <option value="2">HTTP/3</option>
                         </select>
                     </div>
+                    <!-- TLS fingerprint -->
+                    <div>
+                        <label for="gen-tls-profile" class="block text-sm font-medium text-gray-700 mb-1">TLS fingerprint</label>
+                        <select id="gen-tls-profile" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <!-- Options are built from DeepLink.TLS_PROFILES. -->
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">TLS ClientHello fingerprint to mimic. Older clients ignore this setting and use Chrome.</p>
+                    </div>
                     <!-- DNS server addresses -->
                     <div>
                         <label for="gen-dns" class="block text-sm font-medium text-gray-700 mb-1">DNS server addresses, one per line</label>
@@ -283,6 +291,17 @@
             return;
         }
 
+        // --- TLS fingerprint options, from the single profile table ---
+        (function () {
+            var select = document.getElementById('gen-tls-profile');
+            DeepLink.TLS_PROFILES.forEach(function (profile) {
+                var option = document.createElement('option');
+                option.value = String(profile.id);
+                option.textContent = profile.label;
+                select.appendChild(option);
+            });
+        })();
+
         // --- Mask credentials for display ---
         function maskString(str) {
             if (!str || str.length <= 2) return '••••';
@@ -325,6 +344,12 @@
                 rows.push({ label: 'Protocol', value: config.upstream_protocol });
             }
 
+            if (config.tls_profile) {
+                rows.push({
+                    label: 'TLS fingerprint',
+                    value: config.tls_profile.label
+                });
+            }
             if (config.dns_upstreams && config.dns_upstreams.length > 0) {
                 rows.push({ label: 'DNS server addresses', value: config.dns_upstreams.join(', ') });
             }
@@ -498,6 +523,11 @@
         }
 
         // --- Prefill generator form from config ---
+        function setTlsProfileField(profile) {
+            var id = (profile || DeepLink.TLS_PROFILE_CHROME).id;
+            document.getElementById('gen-tls-profile').value = String(id);
+        }
+
         function prefillGenerator(config) {
             document.getElementById('gen-name').value = config.name || '';
             document.getElementById('gen-addresses').value = config.addresses.join(', ');
@@ -506,6 +536,7 @@
             document.getElementById('gen-username').value = config.username || '';
             document.getElementById('gen-password').value = config.password || '';
             document.getElementById('gen-protocol').value = config.upstream_protocol === 'HTTP/3' ? '2' : '1';
+            setTlsProfileField(config.tls_profile);
             document.getElementById('gen-dns').value = (config.dns_upstreams || []).join('\n');
             document.getElementById('gen-prefix').value = config.client_random_prefix || '';
             document.getElementById('gen-auth-key').value = config.client_random_auth_key || '';
@@ -687,6 +718,8 @@
                 custom_sni: document.getElementById('gen-sni').value.trim() || null,
                 client_random_prefix: clientRandomPrefix,
                 client_random_auth_key: clientRandomAuthKey,
+                tls_profile: DeepLink.tlsProfileById(
+                    parseInt(document.getElementById('gen-tls-profile').value, 10)),
                 has_ipv6: document.getElementById('gen-ipv6').checked,
                 anti_dpi: document.getElementById('gen-antidpi').checked,
                 skip_verification: document.getElementById('gen-skipverify').checked,
