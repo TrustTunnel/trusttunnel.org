@@ -212,21 +212,21 @@ describe('golden URIs', () => {
             addresses: ['10.20.30.40:8443'],
             username: 'testuser',
             password: 'testpass',
-            tls_profile: 'firefox'
+            tls_profile: DeepLink.TLS_PROFILE_FIREFOX
         };
         assert.equal(DeepLink.encode(config), PROFILE_URI);
-        assert.equal(DeepLink.decode(PROFILE_URI).tls_profile, 'firefox');
+        assert.equal(DeepLink.decode(PROFILE_URI).tls_profile, DeepLink.TLS_PROFILE_FIREFOX);
     });
 
     it('omits the default tls_profile', () => {
         // The QR page canonicalizes the default away; the server reference emits
         // any explicitly present tls_profile.
-        const config = Object.assign(minimalConfig(), { tls_profile: 'chrome' });
+        const config = Object.assign(minimalConfig(), { tls_profile: DeepLink.TLS_PROFILE_CHROME });
         assert.equal(DeepLink.encode(config), MINIMAL_URI);
     });
 
     it('rejects an unknown tls_profile', () => {
-        const config = Object.assign(minimalConfig(), { tls_profile: 'future_profile' });
+        const config = Object.assign(minimalConfig(), { tls_profile: { id: 0x07, label: 'Future' } });
         assert.throws(() => DeepLink.encode(config), /Unsupported tls_profile/);
     });
 
@@ -267,7 +267,7 @@ describe('golden URIs', () => {
             anti_dpi: true,
             client_random_prefix: 'a0b0/f0f0',
             client_random_auth_key: '00112233445566778899aabbccddeeff',
-            tls_profile: 'firefox',
+            tls_profile: DeepLink.TLS_PROFILE_FIREFOX,
             dns_upstreams: ['1.1.1.1'],
             subscription_url: 'https://alice:secret@vpn.example.com/subscription'
         });
@@ -319,7 +319,7 @@ describe('round-trip', () => {
         anti_dpi: true,
         client_random_prefix: 'a0b0/f0f0',
         client_random_auth_key: '00112233445566778899aabbccddeeff',
-        tls_profile: 'firefox',
+        tls_profile: DeepLink.TLS_PROFILE_FIREFOX,
         dns_upstreams: ['1.1.1.1', 'tls://dns.example.com', 'https://dns.example.com/dns-query'],
         subscription_url: 'https://alice:s3cret@vpn.example.com/subscription'
     };

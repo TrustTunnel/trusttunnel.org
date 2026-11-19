@@ -35,24 +35,33 @@
     };
 
     // tls_profile values, see DEEP_LINK.md tag 0x10.
-    var TLS_PROFILE_NAMES = {
-        0x00: 'chrome',
-        0x01: 'chrome_canary',
-        0x02: 'safari',
-        0x03: 'firefox',
-        0x04: 'okhttp',
-        0x05: 'openssl',
-        0x06: 'boringssl'
-    };
-    var TLS_PROFILE_VALUES = {
-        chrome: 0x00,
-        chrome_canary: 0x01,
-        safari: 0x02,
-        firefox: 0x03,
-        okhttp: 0x04,
-        openssl: 0x05,
-        boringssl: 0x06
-    };
+    function tlsProfile(id, label) {
+        return Object.freeze({ id: id, label: label });
+    }
+    var TLS_PROFILE_CHROME = tlsProfile(0x00, 'Chrome');
+    var TLS_PROFILE_CHROME_CANARY = tlsProfile(0x01, 'Chrome Canary');
+    var TLS_PROFILE_SAFARI = tlsProfile(0x02, 'Safari');
+    var TLS_PROFILE_FIREFOX = tlsProfile(0x03, 'Firefox');
+    var TLS_PROFILE_OKHTTP = tlsProfile(0x04, 'OkHttp');
+    var TLS_PROFILE_OPENSSL = tlsProfile(0x05, 'OpenSSL');
+    var TLS_PROFILE_BORINGSSL = tlsProfile(0x06, 'BoringSSL');
+    var TLS_PROFILES = Object.freeze([
+        TLS_PROFILE_CHROME,
+        TLS_PROFILE_CHROME_CANARY,
+        TLS_PROFILE_SAFARI,
+        TLS_PROFILE_FIREFOX,
+        TLS_PROFILE_OKHTTP,
+        TLS_PROFILE_OPENSSL,
+        TLS_PROFILE_BORINGSSL
+    ]);
+
+    // Returns the TLS_PROFILES entry with this wire id, or null.
+    function tlsProfileById(id) {
+        for (var i = 0; i < TLS_PROFILES.length; i++) {
+            if (TLS_PROFILES[i].id === id) return TLS_PROFILES[i];
+        }
+        return null;
+    }
 
     // --- Base64url (RFC 4648 section 5, no padding) ---
     function base64urlToBytes(str) {
@@ -319,11 +328,11 @@
                     if (value.length !== 1) {
                         throw new Error('Invalid tls_profile: expected one byte.');
                     }
-                    var profileName = TLS_PROFILE_NAMES[value[0]];
-                    if (!profileName) {
+                    var profile = tlsProfileById(value[0]);
+                    if (!profile) {
                         throw new Error('Unknown tls_profile value: ' + value[0]);
                     }
-                    config.tls_profile = profileName;
+                    config.tls_profile = profile;
                     break;
                 default:
                     // Unknown tags are ignored for forward compatibility.
@@ -369,13 +378,6 @@
         return resolved;
     }
 
-    function tlsProfileByte(value) {
-        if (!Object.prototype.hasOwnProperty.call(TLS_PROFILE_VALUES, value)) {
-            throw new Error('Unsupported tls_profile: ' + value);
-        }
-        return TLS_PROFILE_VALUES[value];
-    }
-
     function encodePayload(config) {
         config = config || {};
 
@@ -399,6 +401,9 @@
         var clientRandomPrefix = config.client_random_prefix || null;
         var clientRandomAuthKey = config.client_random_auth_key || null;
         var tlsProfile = config.tls_profile || null;
+        if (tlsProfile && TLS_PROFILES.indexOf(tlsProfile) < 0) {
+            throw new Error('Unsupported tls_profile: ' + JSON.stringify(tlsProfile));
+        }
         if (clientRandomPrefix) {
             var prefixError = validateClientRandomPrefix(clientRandomPrefix);
             if (prefixError) throw new Error(prefixError);
@@ -424,8 +429,8 @@
         });
         if (clientRandomPrefix) chunks.push(writeTLVString(0x0B, clientRandomPrefix));
         if (clientRandomAuthKey) chunks.push(writeTLVString(0x0F, clientRandomAuthKey));
-        if (tlsProfile && tlsProfile !== 'chrome') {
-            chunks.push(writeTLV(0x10, new Uint8Array([tlsProfileByte(tlsProfile)])));
+        if (tlsProfile && tlsProfile !== TLS_PROFILE_CHROME) {
+            chunks.push(writeTLV(0x10, new Uint8Array([tlsProfile.id])));
         }
         if (config.custom_sni) chunks.push(writeTLVString(0x03, config.custom_sni));
         if (!hasIpv6) chunks.push(writeTLVBool(0x04, false));
@@ -569,6 +574,15 @@
 
     return {
         SUPPORTED_VERSION: SUPPORTED_VERSION,
+        TLS_PROFILE_CHROME: TLS_PROFILE_CHROME,
+        TLS_PROFILE_CHROME_CANARY: TLS_PROFILE_CHROME_CANARY,
+        TLS_PROFILE_SAFARI: TLS_PROFILE_SAFARI,
+        TLS_PROFILE_FIREFOX: TLS_PROFILE_FIREFOX,
+        TLS_PROFILE_OKHTTP: TLS_PROFILE_OKHTTP,
+        TLS_PROFILE_OPENSSL: TLS_PROFILE_OPENSSL,
+        TLS_PROFILE_BORINGSSL: TLS_PROFILE_BORINGSSL,
+        TLS_PROFILES: TLS_PROFILES,
+        tlsProfileById: tlsProfileById,
         decode: decode,
         decodePayload: decodePayload,
         encode: encode,

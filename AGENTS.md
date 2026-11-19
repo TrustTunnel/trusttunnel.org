@@ -107,7 +107,7 @@ tests  →  assets/deeplink.js
 - `assets/deeplink.js` MUST NOT access the DOM. It exposes a UMD-style module for browsers and Node.js.
 - `qr.html` owns all DOM interaction: reading form values, rendering configuration details, and drawing the QR code.
 - Format knowledge (tag numbers, value encodings, defaults, field order) is duplicated between the site codec and the public server implementation. The manual conformance check in the Contribution Instructions is mandatory.
-- The site omits `tls_profile` when it equals the default `chrome`. The server reference emits any explicitly present `tls_profile`. This omission is an intentional site-level canonicalization; do not treat it as a tag mismatch.
+- The site omits `tls_profile` when it equals the default `TLS_PROFILE_CHROME` (wire value `0x00`). The server reference emits any explicitly present `tls_profile`. This omission is an intentional site-level canonicalization; do not treat it as a tag mismatch.
 
 ### Code Quality
 
@@ -115,6 +115,7 @@ tests  →  assets/deeplink.js
 - Throw `Error` objects with user-facing messages from the codec. `qr.html` catches them and passes the message to `showError`.
 - Use `escapeHtml` for every value inserted into the DOM.
 - Use the deep-link field names (`hostname`, `addresses`, `custom_sni`, `client_random_auth_key`, `tls_profile`, and so on) as the configuration keys in the codec and in `qr.html`.
+- `tls_profile` values are the frozen `TLS_PROFILE_*` objects (`{ id, label }`) from `assets/deeplink.js`. `TLS_PROFILES` is the only list of profiles: `qr.html` builds the select options and the display labels from it. Do not add profile names or labels in other places.
 - Keep helpers small and local. Do not add abstractions with a single caller.
 
 ### Testing
