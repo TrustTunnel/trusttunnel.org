@@ -228,6 +228,13 @@
                                         <canvas id="qr-canvas"></canvas>
                                     </a>
                                 </div>
+                                <div id="qr-version-note" class="hidden mt-4 flex items-start max-w-md text-sm text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                                    <svg class="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4M12 8h.01"/>
+                                    </svg>
+                                    <p>Compatible with TrustTunnel client 1.3 or later. If the import doesn&#39;t start, update the app.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -247,6 +254,7 @@
                         </svg>
                         Open in TrustTunnel App
                     </a>
+                    <p id="app-version-note" class="hidden mt-3 text-sm text-gray-500">Requires TrustTunnel client 1.3 or later.</p>
                 </div>
 
                 <!-- Configuration Details -->
@@ -519,7 +527,16 @@
 
             showSuccess();
             renderQR(defaultQRSize(currentTTLink.length));
+            renderVersionNotes(config.version);
             renderConfig(config);
+        }
+
+        // Deep-link format version 2 needs TrustTunnel client 1.3 or later.
+        function renderVersionNotes(version) {
+            var needsNewClient = version === 2;
+            ['qr-version-note', 'app-version-note'].forEach(function (id) {
+                document.getElementById(id).classList.toggle('hidden', !needsNewClient);
+            });
         }
 
         // --- Prefill generator form from config ---
